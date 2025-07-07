@@ -1,0 +1,32 @@
+{
+  "name": "dispatch-management-system",
+  "version": "1.0.0",
+  "description": "派车单管理系统 - 动态网页版本",
+  "main": "index.html",
+  "scripts": {
+    "dev": "live-server --port=3000 --open=/index.html",
+    "build": "npm run minify-css && npm run minify-js",
+    "minify-css": "cleancss -o dist/style/bundle.min.css style/*.css",
+    "minify-js": "uglifyjs js/**/*.js -o dist/js/bundle.min.js",
+    "deploy": "npm run build && netlify deploy --prod --dir=dist"
+  },
+  "dependencies": {
+    "axios": "^1.6.0",
+    "firebase": "^10.7.0"
+  },
+  "devDependencies": {
+    "live-server": "^1.2.2",
+    "clean-css-cli": "^5.6.2",
+    "uglify-js": "^3.17.4",
+    "netlify-cli": "^17.10.1"
+  },
+  "keywords": [
+    "dispatch",
+    "management",
+    "logistics",
+    "dynamic",
+    "webapp"
+  ],
+  "author": "Your Name",
+  "license": "MIT"
+}
