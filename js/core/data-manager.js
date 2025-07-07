@@ -287,8 +287,8 @@ class DataManager {
                     status: 'pending',
                     priority: 'high',
                     cargoType: '电子产品',
-                    weight: '2.5吨',
-                    volume: '15立方米',
+                    weight: '2500KG',
+                    volume: '15m³',
                     createTime: new Date().toISOString(),
                     updateTime: new Date().toISOString(),
                     notes: '易碎物品，请小心搬运'
@@ -303,8 +303,8 @@ class DataManager {
                     status: 'preparing',
                     priority: 'medium',
                     cargoType: '纺织品',
-                    weight: '3.8吨',
-                    volume: '25立方米',
+                    weight: '3800KG',
+                    volume: '25m³',
                     createTime: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2小时前创建
                     updateTime: new Date().toISOString(),
                     notes: '防潮包装'
@@ -319,8 +319,8 @@ class DataManager {
                     status: 'in-transit',
                     priority: 'high',
                     cargoType: '机械设备',
-                    weight: '5.2吨',
-                    volume: '12立方米',
+                    weight: '5200KG',
+                    volume: '12m³',
                     createTime: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // 昨天创建
                     updateTime: new Date(Date.now() - 30 * 60 * 1000).toISOString(), // 30分钟前更新
                     notes: '重型货物，需要专用车辆'
@@ -335,8 +335,8 @@ class DataManager {
                     status: 'completed',
                     priority: 'medium',
                     cargoType: '电子元件',
-                    weight: '1.8吨',
-                    volume: '8立方米',
+                    weight: '1800KG',
+                    volume: '8m³',
                     createTime: new Date(Date.now() - 72 * 60 * 60 * 1000).toISOString(), // 3天前创建
                     updateTime: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // 昨天更新
                     notes: '已成功交付'
