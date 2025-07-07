@@ -643,7 +643,7 @@ function previewRoute() {
     if (cargoInfo.type || cargoInfo.weight || cargoInfo.volume || cargoInfo.pieces) {
         previewText += `\n货物信息：\n`;
         if (cargoInfo.type) previewText += `  类型：${cargoInfo.type}\n`;
-        if (cargoInfo.weight) previewText += `  重量：${cargoInfo.weight} 吨\n`;
+        if (cargoInfo.weight) previewText += `  重量：${cargoInfo.weight} KG\n`;
         if (cargoInfo.volume) previewText += `  体积：${cargoInfo.volume} m³\n`;
         if (cargoInfo.pieces) previewText += `  件数：${cargoInfo.pieces} 件\n`;
     }

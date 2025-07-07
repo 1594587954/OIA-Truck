@@ -720,7 +720,7 @@ class OrderManager {
                         <div style="display: flex; flex-wrap: wrap;">
                             <p style="margin: 4px 0; width: 48%;"><strong>货物类型:</strong> ${formData.cargoType}</p>
                             <p style="margin: 4px 0; width: 48%;"><strong>件数:</strong> ${formData.cargoPieces || '未指定'}</p>
-                            <p style="margin: 4px 0; width: 48%;"><strong>重量:</strong> ${formData.cargoWeight ? formData.cargoWeight + ' 吨' : '未指定'}</p>
+                            <p style="margin: 4px 0; width: 48%;"><strong>重量:</strong> ${formData.cargoWeight ? formData.cargoWeight + ' KG' : '未指定'}</p>
                             <p style="margin: 4px 0; width: 48%;"><strong>体积:</strong> ${formData.cargoVolume ? formData.cargoVolume + ' m³' : '未指定'}</p>
                         </div>
                     </div>

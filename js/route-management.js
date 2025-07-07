@@ -92,7 +92,7 @@ function createRouteRow(route) {
     if (route.cargoInfo) {
         const cargoDetails = [];
         if (route.cargoInfo.type) cargoDetails.push(`类型: ${route.cargoInfo.type}`);
-        if (route.cargoInfo.weight) cargoDetails.push(`重量: ${route.cargoInfo.weight}吨`);
+        if (route.cargoInfo.weight) cargoDetails.push(`重量: ${route.cargoInfo.weight}KG`);
         if (route.cargoInfo.volume) cargoDetails.push(`体积: ${route.cargoInfo.volume}m³`);
         if (route.cargoInfo.pieces) cargoDetails.push(`件数: ${route.cargoInfo.pieces}件`);
         cargoInfo = cargoDetails.join(', ');
@@ -595,7 +595,7 @@ function viewRouteDetails(routeId) {
         detailsHtml += `
             <div class="cargo-details">
                 ${route.cargoInfo.type ? `<p><strong>类型：</strong>${route.cargoInfo.type}</p>` : ''}
-                ${route.cargoInfo.weight ? `<p><strong>重量：</strong>${route.cargoInfo.weight} 吨</p>` : ''}
+                ${route.cargoInfo.weight ? `<p><strong>重量：</strong>${route.cargoInfo.weight} KG</p>` : ''}
                 ${route.cargoInfo.volume ? `<p><strong>体积：</strong>${route.cargoInfo.volume} m³</p>` : ''}
                 ${route.cargoInfo.pieces ? `<p><strong>件数：</strong>${route.cargoInfo.pieces} 件</p>` : ''}
             </div>
