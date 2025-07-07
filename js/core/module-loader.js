@@ -7,6 +7,7 @@ class ModuleLoader {
             'performance-monitor', // 性能监控优先加载
             'utils',
             'storage',
+            'data-backup', // 数据备份模块
             // 'dashboard', // 运营总览已移除
             'orders',
             'customer',
@@ -54,7 +55,7 @@ class ModuleLoader {
             console.log('开始快速加载模块...');
 
             // 并行加载核心模块和关键业务模块
-            const criticalModules = ['performance-monitor', 'utils', 'storage', 'dashboard', 'navigation'];
+            const criticalModules = ['performance-monitor', 'utils', 'storage', 'data-backup', 'dashboard', 'navigation'];
             const nonCriticalModules = ['orders', 'customer', 'dispatch', 'transport-team'];
 
             // 第一批：核心模块 + 关键业务模块

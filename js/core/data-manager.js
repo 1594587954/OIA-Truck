@@ -114,12 +114,23 @@ class DataManager {
             const customerData = this.get(this.storageKeys.CUSTOMER_DATA, {});
             customers = Object.entries(customerData).map(([id, data]) => ({
                 id,
-                name: data.pickupFactory || `客户${id}`,
+                name: data.name || data.pickupFactory || `客户${id}`,
+                contact: data.contact || data.pickupContact || '',
+                phone: data.phone || this.extractPhone(data.pickupContact) || '',
+                address: data.address || data.pickupAddress || '',
+                addTime: data.addTime || data.createdAt || new Date().toISOString(),
                 ...data
             }));
         }
         
         return customers;
+    }
+
+    // 从联系人信息中提取电话号码
+    extractPhone(contactInfo) {
+        if (!contactInfo) return '';
+        const phoneMatch = contactInfo.match(/\((\d+)\)/);
+        return phoneMatch ? phoneMatch[1] : '';
     }
 
     setCustomers(customers) {
@@ -189,6 +200,12 @@ class DataManager {
         if (!this.get(this.storageKeys.CUSTOMER_DATA)) {
             const defaultCustomerData = {
                 customer1: {
+                    name: "东莞电子产品有限公司",
+                    contact: "王经理",
+                    phone: "13800138000",
+                    address: "广东省东莞市东城区科技路88号",
+                    addTime: new Date().toISOString(),
+                    // 保留原有字段以兼容
                     pickupFactory: "东莞电子产品有限公司",
                     pickupAddress: "广东省东莞市东城区科技路88号",
                     pickupContact: "王经理 (13800138000)",
@@ -197,6 +214,12 @@ class DataManager {
                     deliveryContact: "张主任 (13510101010)"
                 },
                 customer2: {
+                    name: "深圳科技集团",
+                    contact: "张总监",
+                    phone: "13500135000",
+                    address: "深圳市南山区科技园南区6栋",
+                    addTime: new Date().toISOString(),
+                    // 保留原有字段以兼容
                     pickupFactory: "深圳科技集团",
                     pickupAddress: "深圳市南山区科技园南区6栋",
                     pickupContact: "张总监 (13500135000)",
@@ -205,6 +228,12 @@ class DataManager {
                     deliveryContact: "李主管 (13600136000)"
                 },
                 customer3: {
+                    name: "广州机械设备厂",
+                    contact: "李厂长",
+                    phone: "13900139000",
+                    address: "广州市黄埔区工业路168号",
+                    addTime: new Date().toISOString(),
+                    // 保留原有字段以兼容
                     pickupFactory: "广州机械设备厂",
                     pickupAddress: "广州市黄埔区工业路168号",
                     pickupContact: "李厂长 (13900139000)",
@@ -213,6 +242,12 @@ class DataManager {
                     deliveryContact: "陈主任 (13700137000)"
                 },
                 customer4: {
+                    name: "佛山电器制造",
+                    contact: "陈主管",
+                    phone: "13700137000",
+                    address: "佛山市顺德区工业大道28号",
+                    addTime: new Date().toISOString(),
+                    // 保留原有字段以兼容
                     pickupFactory: "佛山电器制造",
                     pickupAddress: "佛山市顺德区工业大道28号",
                     pickupContact: "陈主管 (13700137000)",
@@ -221,6 +256,12 @@ class DataManager {
                     deliveryContact: "刘经理 (13600136000)"
                 },
                 customer5: {
+                    name: "中山包装材料厂",
+                    contact: "刘主任",
+                    phone: "13600136000",
+                    address: "中山市火炬开发区兴中路15号",
+                    addTime: new Date().toISOString(),
+                    // 保留原有字段以兼容
                     pickupFactory: "中山包装材料厂",
                     pickupAddress: "中山市火炬开发区兴中路15号",
                     pickupContact: "刘主任 (13600136000)",
@@ -314,6 +355,72 @@ class DataManager {
         }
 
         console.log('默认数据初始化完成');
+    }
+
+    // 删除客户
+    deleteCustomer(customerId) {
+        try {
+            // 获取当前客户数据
+            const customers = this.getCustomers();
+            
+            // 过滤掉要删除的客户
+            const updatedCustomers = customers.filter(customer => customer.id !== customerId);
+            
+            // 保存更新后的客户数据
+            this.setCustomers(updatedCustomers);
+            
+            console.log(`客户 ${customerId} 已删除`);
+            return true;
+        } catch (error) {
+            console.error('删除客户时出错:', error);
+            return false;
+        }
+    }
+
+    // 设置客户数据
+    setCustomers(customers) {
+        try {
+            // 将数组格式转换为对象格式以兼容旧系统
+            const customerData = {};
+            customers.forEach(customer => {
+                customerData[customer.id] = customer;
+            });
+            
+            // 保存到新格式
+            this.set(this.storageKeys.CUSTOMERS, customers);
+            
+            // 同时保存到旧格式以确保兼容性
+            localStorage.setItem('customerData', JSON.stringify(customerData));
+            
+            // 清除缓存
+            this.cache.delete(this.storageKeys.CUSTOMERS);
+            
+            return true;
+        } catch (error) {
+            console.error('保存客户数据时出错:', error);
+            return false;
+        }
+    }
+
+    // 添加或更新客户
+    saveCustomer(customer) {
+        try {
+            const customers = this.getCustomers();
+            const existingIndex = customers.findIndex(c => c.id === customer.id);
+            
+            if (existingIndex >= 0) {
+                // 更新现有客户
+                customers[existingIndex] = { ...customers[existingIndex], ...customer };
+            } else {
+                // 添加新客户
+                customers.push(customer);
+            }
+            
+            return this.setCustomers(customers);
+        } catch (error) {
+            console.error('保存客户时出错:', error);
+            return false;
+        }
     }
 
     // 清除所有缓存

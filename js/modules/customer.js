@@ -23,9 +23,6 @@ function saveCustomer() {
         return;
     }
 
-    // 获取现有客户数据
-    const existingData = JSON.parse(localStorage.getItem('customerData')) || {};
-
     // 检查是否为编辑模式
     const editingId = document.getElementById('customerModal').dataset.editingId;
 
@@ -42,38 +39,36 @@ function saveCustomer() {
             phone: contactPhone
         });
     } else {
-        // 新增模式
-        customerId = 'customer' + (Object.keys(existingData).length + 1);
+        // 新增模式 - 生成唯一ID
+        customerId = 'customer_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
     }
 
-    // 添加到客户数据
-    existingData[customerId] = {
+    // 构建客户数据对象
+    const customerData = {
+        id: customerId,
         name: customerName,
         address: customerAddress,
         contact: contactName,
         phone: contactPhone,
-        addTime: existingData[customerId]?.addTime || new Date().toISOString()
-        // 删除状态字段
+        addTime: editingId ? (getExistingCustomerAddTime(customerId) || new Date().toISOString()) : new Date().toISOString()
     };
 
-    // 保存到本地存储
-    localStorage.setItem('customerData', JSON.stringify(existingData));
-
-    // 同步到DataManager（如果存在）
-    if (window.dataManager) {
-        // 将对象格式转换为数组格式
-        const customersArray = Object.entries(existingData).map(([id, data]) => ({
-            id,
-            name: data.name,
-            address: data.address,
-            contact: data.contact,
-            phone: data.phone,
-            addTime: data.addTime
-        }));
-        window.dataManager.setCustomers(customersArray);
+    // 优先使用dataManager保存客户
+    if (window.dataManager && typeof window.dataManager.saveCustomer === 'function') {
+        window.dataManager.saveCustomer(customerData);
+        
+        // 同时更新旧格式的customerData以保持兼容性
+        const existingData = window.dataManager.getCustomerData();
+        existingData[customerId] = customerData;
+        window.dataManager.setCustomerData(existingData);
+    } else {
+        // 降级到localStorage操作
+        const existingData = JSON.parse(localStorage.getItem('customerData')) || {};
+        existingData[customerId] = customerData;
+        localStorage.setItem('customerData', JSON.stringify(existingData));
     }
 
-    // 更新客户选择下拉框
+     // 更新客户选择下拉框
     updateCustomerDropdown();
 
     // 关闭模态框
@@ -86,6 +81,23 @@ function saveCustomer() {
 
     const action = editingId ? '更新' : '添加';
     alert(`客户 ${customerName} 已${action}!`);
+}
+
+// 获取现有客户的添加时间的辅助函数
+function getExistingCustomerAddTime(customerId) {
+    try {
+        if (window.dataManager && typeof window.dataManager.getCustomers === 'function') {
+            const customers = window.dataManager.getCustomers();
+            const existingCustomer = customers.find(c => c.id === customerId);
+            return existingCustomer?.addTime;
+        } else {
+            const existingData = JSON.parse(localStorage.getItem('customerData')) || {};
+            return existingData[customerId]?.addTime;
+        }
+    } catch (error) {
+        console.error('获取客户添加时间时出错:', error);
+        return null;
+    }
 }
 
 // 更新客户下拉框
@@ -182,8 +194,29 @@ function closeCustomerDetailModal() {
 
 // 编辑客户
 function editCustomer(customerId) {
-    const customerData = JSON.parse(localStorage.getItem('customerData')) || {};
-    const customer = customerData[customerId];
+    // 优先使用dataManager获取客户数据
+    let customer;
+    if (window.dataManager && typeof window.dataManager.getCustomers === 'function') {
+        const customers = window.dataManager.getCustomers();
+        customer = customers.find(c => c.id === customerId);
+        
+        // 如果在新格式中没找到，尝试从旧格式中获取
+        if (!customer) {
+            const customerData = window.dataManager.getCustomerData();
+            customer = customerData[customerId];
+            if (customer) {
+                // 为旧格式数据添加id字段
+                customer.id = customerId;
+            }
+        }
+    } else {
+        // 降级到localStorage
+        const customerData = JSON.parse(localStorage.getItem('customerData')) || {};
+        customer = customerData[customerId];
+        if (customer) {
+            customer.id = customerId;
+        }
+    }
 
     if (!customer) {
         alert('客户信息不存在');
@@ -228,10 +261,91 @@ function editCustomer(customerId) {
 // 确保editCustomer函数在全局作用域中可用
 window.editCustomer = editCustomer;
 
+// 统一客户字段格式
+function unifyCustomerFields() {
+    if (!window.dataManager) {
+        alert('数据管理器未初始化');
+        return;
+    }
+    
+    try {
+        // 获取所有客户数据
+        const customers = window.dataManager.getCustomers();
+        const customerData = window.dataManager.getCustomerData();
+        
+        let updatedCount = 0;
+        const unifiedCustomers = [];
+        const unifiedCustomerData = {};
+        
+        // 处理新格式的客户数据
+        customers.forEach(customer => {
+            const unifiedCustomer = {
+                id: customer.id,
+                name: customer.name || '',
+                contact: customer.contact || '',
+                phone: customer.phone || '',
+                address: customer.address || '',
+                addTime: customer.addTime || new Date().toISOString()
+            };
+            unifiedCustomers.push(unifiedCustomer);
+            unifiedCustomerData[customer.id] = unifiedCustomer;
+            updatedCount++;
+        });
+        
+        // 处理旧格式的客户数据
+        Object.entries(customerData).forEach(([id, data]) => {
+            // 检查是否已经在新格式中处理过
+            if (!unifiedCustomers.find(c => c.id === id)) {
+                const unifiedCustomer = {
+                    id: id,
+                    name: data.name || data.pickupFactory || '',
+                    contact: data.contact || data.pickupContact || '',
+                    phone: data.phone || window.dataManager.extractPhone(data.pickupContact) || '',
+                    address: data.address || data.pickupAddress || '',
+                    addTime: data.addTime || new Date().toISOString()
+                };
+                unifiedCustomers.push(unifiedCustomer);
+                unifiedCustomerData[id] = unifiedCustomer;
+                updatedCount++;
+            }
+        });
+        
+        // 保存统一后的数据
+        window.dataManager.setCustomers(unifiedCustomers);
+        window.dataManager.setCustomerData(unifiedCustomerData);
+        
+        // 刷新客户列表显示
+        if (getCurrentSection() === 'customerList') {
+            loadCustomerListData();
+        }
+        
+        // 更新客户选择下拉框
+        updateCustomerDropdown();
+        
+        alert(`客户字段统一完成！共处理 ${updatedCount} 个客户记录。`);
+        
+    } catch (error) {
+        console.error('统一客户字段时出错:', error);
+        alert('统一客户字段失败，请查看控制台了解详情。');
+    }
+}
+
+// 将统一字段函数添加到全局作用域
+window.unifyCustomerFields = unifyCustomerFields;
+
 // 删除客户
 function deleteCustomer(customerId) {
-    const customerData = JSON.parse(localStorage.getItem('customerData')) || {};
-    const customer = customerData[customerId];
+    // 优先使用dataManager获取客户数据
+    let customers;
+    if (window.dataManager && typeof window.dataManager.getCustomers === 'function') {
+        customers = window.dataManager.getCustomers();
+    } else {
+        // 降级到localStorage
+        const customerData = JSON.parse(localStorage.getItem('customerData')) || {};
+        customers = Object.values(customerData);
+    }
+
+    const customer = customers.find(c => c.id === customerId);
 
     if (!customer) {
         alert('客户信息不存在');
@@ -247,11 +361,15 @@ function deleteCustomer(customerId) {
     }
 
     if (confirm(confirmMessage)) {
-        // 从数据中删除
-        delete customerData[customerId];
-
-        // 保存到本地存储
-        localStorage.setItem('customerData', JSON.stringify(customerData));
+        // 优先使用dataManager删除客户
+        if (window.dataManager && typeof window.dataManager.deleteCustomer === 'function') {
+            window.dataManager.deleteCustomer(customerId);
+        } else {
+            // 降级到localStorage操作
+            const customerData = JSON.parse(localStorage.getItem('customerData')) || {};
+            delete customerData[customerId];
+            localStorage.setItem('customerData', JSON.stringify(customerData));
+        }
         
         // 从线路管理中移除该客户的相关信息
         removeCustomerFromRoutes(customerId);
@@ -338,17 +456,28 @@ function batchDeleteCustomers() {
     }
     
     if (confirm(confirmMessage)) {
-        const customerData = JSON.parse(localStorage.getItem('customerData')) || {};
-        
-        // 从数据中删除选中的客户
-        customerIds.forEach(customerId => {
-            delete customerData[customerId];
-            // 从线路管理中移除该客户的相关信息
-            removeCustomerFromRoutes(customerId);
-        });
-        
-        // 保存到本地存储
-        localStorage.setItem('customerData', JSON.stringify(customerData));
+        // 优先使用dataManager删除客户
+        if (window.dataManager && typeof window.dataManager.deleteCustomer === 'function') {
+            // 使用dataManager逐个删除客户
+            customerIds.forEach(customerId => {
+                window.dataManager.deleteCustomer(customerId);
+                // 从线路管理中移除该客户的相关信息
+                removeCustomerFromRoutes(customerId);
+            });
+        } else {
+            // 降级到localStorage操作
+            const customerData = JSON.parse(localStorage.getItem('customerData')) || {};
+            
+            // 从数据中删除选中的客户
+            customerIds.forEach(customerId => {
+                delete customerData[customerId];
+                // 从线路管理中移除该客户的相关信息
+                removeCustomerFromRoutes(customerId);
+            });
+            
+            // 保存到本地存储
+            localStorage.setItem('customerData', JSON.stringify(customerData));
+        }
         
         // 更新客户下拉框
         updateCustomerDropdown();
@@ -860,5 +989,18 @@ function updateCustomerDropdown() {
 
 // 将函数添加到全局作用域
 window.updateCustomerDropdown = updateCustomerDropdown;
+window.openCustomerModal = openCustomerModal;
+window.closeCustomerModal = closeCustomerModal;
+window.saveCustomer = saveCustomer;
+window.clearCustomerForm = clearCustomerForm;
+window.editCustomer = editCustomer;
+window.deleteCustomer = deleteCustomer;
+window.viewCustomerDetail = viewCustomerDetail;
+window.closeCustomerDetailModal = closeCustomerDetailModal;
+window.toggleCustomerSelectAll = toggleCustomerSelectAll;
+window.updateCustomerBatchButtons = updateCustomerBatchButtons;
+window.batchDeleteCustomers = batchDeleteCustomers;
+window.exportSelectedCustomers = exportSelectedCustomers;
+window.importCustomerData = importCustomerData;
 
 

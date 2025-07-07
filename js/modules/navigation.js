@@ -1628,3 +1628,18 @@ function addWaypointFromCustomerData(waypointData) {
         }, 100);
     }
 }
+
+// 确保所有客户相关函数在全局作用域中可用
+window.showCustomerList = showCustomerList;
+window.loadCustomerListData = loadCustomerListData;
+window.loadCustomerData = loadCustomerData;
+window.showCustomerListModal = showCustomerListModal;
+window.closeCustomerSelectionModal = closeCustomerSelectionModal;
+window.filterCustomerSelection = filterCustomerSelection;
+window.clearCustomerSearch = clearCustomerSearch;
+window.goToCustomerPage = goToCustomerPage;
+window.changeCustomerPage = changeCustomerPage;
+window.goToCustomerLastPage = goToCustomerLastPage;
+window.viewCustomerDetail = viewCustomerDetail;
+window.toggleCustomerSelectAll = toggleCustomerSelectAll;
+window.updateCustomerBatchButtons = updateCustomerBatchButtons;
