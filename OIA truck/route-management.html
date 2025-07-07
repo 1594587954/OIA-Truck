@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>线路管理 - 派车单管理系统</title>
+    <link rel="stylesheet" href="style/common.css">
+    <link rel="stylesheet" href="style/card-styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+</head>
+
+<body>
+    <!-- 顶部导航栏 -->
+    <nav class="topbar">
+        <div class="logo">
+            <img id="company-logo" alt="公司logo" />
+        </div>
+        <div class="nav-links">
+            <a href="index.html">货运管理</a>
+            <a href="index.html">DIY路线</a>
+            <a href="#" class="active">线路管理</a>
+            <a href="index.html">客户列表</a>
+        </div>
+        <div class="search-box">
+            <input type="text" placeholder="搜索..." />
+            <i class="fas fa-search"></i>
+        </div>
+    </nav>
+
+    <!-- 主要内容区域 -->
+    <div class="container">
+        <!-- 侧边栏导航 -->
+        <nav class="sidebar">
+            <div class="sidebar-section">
+                <h3>货运管理</h3>
+                <a href="index.html" class="nav-item"><i class="fas fa-chart-line"></i>运营总览</a>
+                <a href="index.html" class="nav-item"><i class="fas fa-list"></i>订单管理</a>
+            </div>
+            <div class="sidebar-section">
+                <h3>派车管理</h3>
+                <a href="index.html" class="nav-item"><i class="fas fa-plus"></i>创建派车单</a>
+                <a href="index.html" class="nav-item"><i class="fas fa-history"></i>历史派车单</a>
+            </div>
+        </nav>
+        
+        <div class="route-management-container">
+            <!-- 页面头部 -->
+            <div class="page-header">
+                <h1><i class="fas fa-route"></i> 线路管理</h1>
+                <p>管理和编辑已保存的DIY路线</p>
+            </div>
+
+            <!-- 控制区域 -->
+            <div class="route-controls">
+                <div class="search-container">
+                    <input type="text" id="routeSearch" placeholder="搜索路线名称、起点或备注..." oninput="searchRoutes()">
+                    <i class="fas fa-search"></i>
+                </div>
+                <div class="control-buttons">
+                    <button class="btn btn-sm btn-outline" onclick="toggleSelectAll('route')">
+                        <i class="fas fa-check-square"></i> 全选/取消
+                    </button>
+                    <button class="btn btn-sm btn-danger" onclick="batchDeleteRoutes()" id="batchDeleteRoutesBtn" disabled>
+                        <i class="fas fa-trash"></i> 批量删除
+                    </button>
+                    <button class="btn btn-sm btn-info" onclick="exportSelectedRoutes()" id="exportRoutesBtn" disabled>
+                        <i class="fas fa-download"></i> 导出选中
+                    </button>
+                    <button class="btn btn-sm btn-warning" onclick="importRouteData()">
+                        <i class="fas fa-upload"></i> 导入数据
+                    </button>
+                    <button class="btn btn-secondary" onclick="refreshRoutes()">
+                        <i class="fas fa-sync-alt"></i> 刷新
+                    </button>
+                    <button class="btn btn-primary" onclick="createNewRoute()">
+                        <i class="fas fa-plus"></i> 创建新路线
+                    </button>
+                </div>
+            </div>
+
+            <!-- 路线列表 -->
+            <div class="routes-table-container">
+                <table class="routes-table" id="routesTable">
+                    <thead>
+                        <tr>
+                            <th class="checkbox-column">
+                                <input type="checkbox" id="selectAllRoutes" onchange="toggleSelectAll('route')">
+                            </th>
+                            <th>线路名称</th>
+                            <th>途经点</th>
+                            <th>货物信息</th>
+                            <th>备注</th>
+                            <th class="actions-column">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="routesTableBody">
+                        <!-- 路线数据将在这里动态生成 -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 空状态 -->
+            <div id="emptyState" class="empty-state" style="display: none;">
+                <i class="fas fa-route"></i>
+                <h3>暂无保存的路线</h3>
+                <p>您还没有保存任何DIY路线，点击上方按钮创建新路线</p>
+                <button class="btn btn-primary" onclick="createNewRoute()">
+                    <i class="fas fa-plus"></i> 创建第一条路线
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 导入预览模态框 -->
+    <div id="routeImportPreviewModal" class="modal import-preview-modal">
+        <div class="modal-content import-preview-content">
+            <div class="modal-header">
+                <h3>📊 导入线路数据预览</h3>
+                <span class="close" onclick="closeRouteImportPreview()">&times;</span>
+            </div>
+            <div class="import-preview-container">
+                <div class="import-summary">
+                    <div class="summary-item success">
+                        <span>✅</span>
+                        <div>
+                            <div>有效数据</div>
+                            <div id="routeValidCount">0</div>
+                        </div>
+                    </div>
+                    <div class="summary-item error">
+                        <span>❌</span>
+                        <div>
+                            <div>无效数据</div>
+                            <div id="routeInvalidCount">0</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="routeValidDataSection" class="preview-section">
+                    <h4>✅ 有效数据 (将被导入)</h4>
+                    <div class="preview-table-container">
+                        <table class="preview-table">
+                            <thead>
+                                <tr>
+                                    <th>线路名称</th>
+                                    <th>起点</th>
+                                    <th>终点</th>
+                                    <th>途经点数量</th>
+                                    <th>备注</th>
+                                </tr>
+                            </thead>
+                            <tbody id="routeValidDataBody">
+                                <!-- 有效数据将在这里显示 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div id="routeInvalidDataSection" class="preview-section error-section" style="display: none;">
+                    <h4>❌ 无效数据 (将被跳过)</h4>
+                    <div class="error-list" id="routeInvalidDataList">
+                        <!-- 无效数据将在这里显示 -->
+                    </div>
+                </div>
+                
+                <div class="import-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeRouteImportPreview()">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="confirmRouteImport()" id="confirmRouteImportBtn">确认导入</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 路线详情模态框 -->
+    <div id="routeDetailsModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalRouteTitle"><i class="fas fa-route"></i> 路线详情</h3>
+                <button class="close-btn" onclick="closeModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body" id="modalRouteContent">
+                <!-- 路线详情内容将在这里动态生成 -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal()">
+                    <i class="fas fa-times"></i> 关闭
+                </button>
+                <button class="btn btn-primary" id="editRouteBtn">
+                    <i class="fas fa-edit"></i> 编辑路线
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 删除确认模态框 -->
+    <div id="deleteConfirmModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-exclamation-triangle"></i> 确认删除</h3>
+                <button class="close-btn" onclick="closeDeleteModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>确定要删除路线 "<span id="deleteRouteName"></span>" 吗？</p>
+                <p class="text-danger">此操作不可撤销！</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeDeleteModal()">
+                    <i class="fas fa-times"></i> 取消
+                </button>
+                <button class="btn btn-danger" id="confirmDeleteBtn">
+                    <i class="fas fa-trash"></i> 确认删除
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/core/data-manager.js"></script>
+    <script src="js/modules/utils.js"></script>
+    <script src="js/route-management.js"></script>
+</body>
+
+</html>
