@@ -44,7 +44,23 @@ npm run dev
 # 打开浏览器访问 http://localhost:3000
 ```
 
-### 2. Firebase配置
+### 2. GitHub Pages 部署
+
+```bash
+# 安装 gh-pages 依赖
+npm install
+
+# 部署到 GitHub Pages
+npm run deploy-github
+```
+
+**自动部署设置：**
+1. 将代码推送到 GitHub 仓库
+2. 在仓库设置中启用 GitHub Pages
+3. 选择 GitHub Actions 作为部署源
+4. 推送到 main 分支时会自动部署
+
+### 3. Firebase配置
 
 1. 创建Firebase项目:
    - 访问 [Firebase Console](https://console.firebase.google.com/)

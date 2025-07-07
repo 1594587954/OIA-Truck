@@ -8,7 +8,9 @@
     "build": "npm run minify-css && npm run minify-js",
     "minify-css": "cleancss -o dist/style/bundle.min.css style/*.css",
     "minify-js": "uglifyjs js/**/*.js -o dist/js/bundle.min.js",
-    "deploy": "npm run build && netlify deploy --prod --dir=dist"
+    "deploy": "npm run build && netlify deploy --prod --dir=dist",
+    "predeploy": "npm run build",
+    "deploy-github": "gh-pages -d ."
   },
   "dependencies": {
     "axios": "^1.6.0",
@@ -18,7 +20,8 @@
     "live-server": "^1.2.2",
     "clean-css-cli": "^5.6.2",
     "uglify-js": "^3.17.4",
-    "netlify-cli": "^17.10.1"
+    "netlify-cli": "^17.10.1",
+    "gh-pages": "^6.1.0"
   },
   "keywords": [
     "dispatch",

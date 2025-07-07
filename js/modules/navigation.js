@@ -578,10 +578,10 @@ function saveRoute() {
 // 获取货物信息
 function getCargoInfo() {
     return {
-        type: document.getElementById('routeCargoType').value || '',
-        weight: document.getElementById('routeCargoWeight').value || '',
-        volume: document.getElementById('routeCargoVolume').value || '',
-        pieces: document.getElementById('routeCargoPieces').value || ''
+        type: document.getElementById('cargoType').value || '',
+        weight: document.getElementById('cargoWeight').value || '',
+        volume: document.getElementById('cargoVolume').value || '',
+        pieces: document.getElementById('cargoPieces').value || ''
     };
 }
 
@@ -657,10 +657,10 @@ function clearRouteForm() {
     document.getElementById('routeNotes').value = '';
 
     // 清空货物信息
-    document.getElementById('routeCargoType').value = '';
-    document.getElementById('routeCargoWeight').value = '';
-    document.getElementById('routeCargoVolume').value = '';
-    document.getElementById('routeCargoPieces').value = '';
+    document.getElementById('cargoType').value = '';
+    document.getElementById('cargoWeight').value = '';
+    document.getElementById('cargoVolume').value = '';
+    document.getElementById('cargoPieces').value = '';
 
     // 清空所有途经点
     const container = document.getElementById('waypointsContainer');
@@ -1552,10 +1552,10 @@ function loadRouteForEdit(routeId) {
 
     // 填充货物信息（如果存在）
     if (route.cargoInfo) {
-        document.getElementById('routeCargoType').value = route.cargoInfo.type || '';
-        document.getElementById('routeCargoWeight').value = route.cargoInfo.weight || '';
-        document.getElementById('routeCargoVolume').value = route.cargoInfo.volume || '';
-        document.getElementById('routeCargoPieces').value = route.cargoInfo.pieces || '';
+        document.getElementById('cargoType').value = route.cargoInfo.type || '';
+        document.getElementById('cargoWeight').value = route.cargoInfo.weight || '';
+        document.getElementById('cargoVolume').value = route.cargoInfo.volume || '';
+        document.getElementById('cargoPieces').value = route.cargoInfo.pieces || '';
     }
 
     // 添加途经点
