@@ -578,10 +578,10 @@ function saveRoute() {
 // 获取货物信息
 function getCargoInfo() {
     return {
-        type: document.getElementById('cargoType').value || '',
-        weight: document.getElementById('cargoWeight').value || '',
-        volume: document.getElementById('cargoVolume').value || '',
-        pieces: document.getElementById('cargoPieces').value || ''
+        type: document.getElementById('routeCargoType').value || '',
+        weight: document.getElementById('routeCargoWeight').value || '',
+        volume: document.getElementById('routeCargoVolume').value || '',
+        pieces: document.getElementById('routeCargoPieces').value || ''
     };
 }
 
@@ -657,10 +657,10 @@ function clearRouteForm() {
     document.getElementById('routeNotes').value = '';
 
     // 清空货物信息
-    document.getElementById('cargoType').value = '';
-    document.getElementById('cargoWeight').value = '';
-    document.getElementById('cargoVolume').value = '';
-    document.getElementById('cargoPieces').value = '';
+    document.getElementById('routeCargoType').value = '';
+    document.getElementById('routeCargoWeight').value = '';
+    document.getElementById('routeCargoVolume').value = '';
+    document.getElementById('routeCargoPieces').value = '';
 
     // 清空所有途经点
     const container = document.getElementById('waypointsContainer');

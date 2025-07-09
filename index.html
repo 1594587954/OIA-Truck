@@ -189,6 +189,9 @@
                         <button class="btn btn-sm btn-info" id="exportOrdersBtn" disabled>
                             <i class="fas fa-download"></i> 导出选中
                         </button>
+                        <button class="btn btn-sm btn-warning" id="exportMonthlyOrdersBtn">
+                            <i class="fas fa-calendar-alt"></i> 导出本月订单
+                        </button>
                     </div>
                 </div>
                 <div class="table-container">
@@ -634,10 +637,10 @@
                         <div class="form-group">
                             <div class="form-row">
                                 <div class="form-col">
-                                    <label for="cargoType"><i class="fas fa-tag"></i> 货物类型</label>
+                                    <label for="routeCargoType"><i class="fas fa-tag"></i> 货物类型</label>
                                     <input
                                         type="text"
-                                        id="cargoType"
+                                        id="routeCargoType"
                                         class="form-control"
                                         placeholder="请输入货物类型"
                                         lang="zh-CN"
@@ -645,10 +648,10 @@
                                     >
                                 </div>
                                 <div class="form-col">
-                                    <label for="cargoWeight"><i class="fas fa-weight-hanging"></i> 重量 (KG)</label>
+                                    <label for="routeCargoWeight"><i class="fas fa-weight-hanging"></i> 重量 (KG)</label>
                                     <input
                                         type="text"
-                                        id="cargoWeight"
+                                        id="routeCargoWeight"
                                         class="form-control"
                                         placeholder="请输入重量"
                                         lang="zh-CN"
@@ -658,10 +661,10 @@
                             </div>
                             <div class="form-row">
                                 <div class="form-col">
-                                    <label for="cargoVolume"><i class="fas fa-cube"></i> 体积 (m³)</label>
+                                    <label for="routeCargoVolume"><i class="fas fa-cube"></i> 体积 (m³)</label>
                                     <input
                                         type="text"
-                                        id="cargoVolume"
+                                        id="routeCargoVolume"
                                         class="form-control"
                                         placeholder="请输入体积"
                                         lang="zh-CN"
@@ -669,10 +672,10 @@
                                     >
                                 </div>
                                 <div class="form-col">
-                                    <label for="cargoPieces"><i class="fas fa-layer-group"></i> 件数</label>
+                                    <label for="routeCargoPieces"><i class="fas fa-layer-group"></i> 件数</label>
                                     <input
                                         type="text"
-                                        id="cargoPieces"
+                                        id="routeCargoPieces"
                                         class="form-control"
                                         placeholder="请输入件数"
                                         lang="zh-CN"
@@ -1161,28 +1164,125 @@
 
     <!-- 延迟加载外部资源 -->
     <script>
-        // 异步加载外部库
+        // 异步加载外部库，包含错误处理和回退机制
         function loadExternalLibraries() {
             const libraries = [
-                'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js',
-                'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
-                'https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js',
-                'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js'
-            ];
-
-            libraries.forEach((src, index) => {
-                const script = document.createElement('script');
-                script.src = src;
-                script.async = true;
-                if (index === 1) { // jsPDF
-                    script.onload = () => {
+                {
+                    src: 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js',
+                    name: 'html2canvas',
+                    fallback: null
+                },
+                {
+                    src: 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
+                    name: 'jsPDF',
+                    fallback: null,
+                    onload: () => {
                         if (typeof window.jspdf !== 'undefined') {
                             window.jsPDF = window.jspdf.jsPDF;
                         }
-                    };
+                    }
+                },
+                {
+                    src: 'https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js',
+                    name: 'Firebase App',
+                    fallback: 'https://cdnjs.cloudflare.com/ajax/libs/firebase/9.22.0/firebase-app-compat.min.js'
+                },
+                {
+                    src: 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js',
+                    name: 'Firebase Firestore',
+                    fallback: 'https://cdnjs.cloudflare.com/ajax/libs/firebase/9.22.0/firebase-firestore-compat.min.js'
                 }
-                document.head.appendChild(script);
+            ];
+
+            function loadScript(library, isFallback = false) {
+                return new Promise((resolve, reject) => {
+                    const script = document.createElement('script');
+                    script.src = library.src;
+                    script.async = true;
+                    
+                    script.onload = () => {
+                        console.log(`✅ ${library.name} 加载成功${isFallback ? ' (使用备用源)' : ''}`);
+                        if (library.onload) {
+                            library.onload();
+                        }
+                        resolve();
+                    };
+                    
+                    script.onerror = () => {
+                        const errorMsg = `❌ ${library.name} 加载失败${isFallback ? ' (备用源也失败)' : ''}`;
+                        console.warn(errorMsg);
+                        
+                        if (!isFallback && library.fallback) {
+                            console.log(`🔄 尝试加载 ${library.name} 备用源...`);
+                            loadScript({...library, src: library.fallback}, true)
+                                .then(resolve)
+                                .catch(reject);
+                        } else {
+                            // 如果是Firebase相关脚本失败，显示用户友好的提示
+                            if (library.name.includes('Firebase')) {
+                                showFirebaseLoadingError();
+                            }
+                            reject(new Error(errorMsg));
+                        }
+                    };
+                    
+                    document.head.appendChild(script);
+                });
+            }
+
+            // 依次加载库
+            libraries.forEach((library, index) => {
+                setTimeout(() => {
+                    loadScript(library).catch(error => {
+                        console.error(`库加载失败: ${error.message}`);
+                    });
+                }, index * 100); // 错开加载时间
             });
+        }
+
+        // 显示Firebase加载错误提示
+        function showFirebaseLoadingError() {
+            const notification = document.createElement('div');
+            notification.id = 'firebase-error-notification';
+            notification.style.cssText = `
+                position: fixed;
+                top: 60px;
+                right: 20px;
+                z-index: 10001;
+                background: #ff9800;
+                color: white;
+                padding: 12px 16px;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                font-size: 14px;
+                max-width: 350px;
+                line-height: 1.4;
+            `;
+            notification.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <div>
+                        <strong>云端功能受限</strong><br>
+                        <small>浏览器阻止了Firebase加载，系统将使用本地存储模式</small>
+                    </div>
+                    <button onclick="this.parentElement.parentElement.remove()" style="background: none; border: none; color: white; font-size: 16px; cursor: pointer; margin-left: auto;">×</button>
+                </div>
+            `;
+            
+            // 移除已存在的通知
+            const existing = document.getElementById('firebase-error-notification');
+            if (existing) {
+                existing.remove();
+            }
+            
+            document.body.appendChild(notification);
+            
+            // 5秒后自动移除
+            setTimeout(() => {
+                if (notification.parentElement) {
+                    notification.remove();
+                }
+            }, 5000);
         }
 
         // 页面加载完成后再加载外部库

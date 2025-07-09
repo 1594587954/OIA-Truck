@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase 回退机制测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .status.success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .status.warning { background: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        .status.error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .btn:hover { background: #0056b3; }
+        .btn:disabled { background: #6c757d; cursor: not-allowed; }
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 10px;
+            margin: 10px 0;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔥 Firebase 回退机制测试</h1>
+        <p>此页面用于测试当浏览器阻止Firebase加载时的回退机制。</p>
+        
+        <div class="test-section">
+            <h3>📊 系统状态</h3>
+            <div id="firebase-status" class="status warning">检测中...</div>
+            <div id="storage-mode" class="status warning">存储模式: 检测中...</div>
+        </div>
+
+        <div class="test-section">
+            <h3>🧪 功能测试</h3>
+            <button class="btn" onclick="testAddDocument()">测试添加文档</button>
+            <button class="btn" onclick="testGetDocuments()">测试获取文档</button>
+            <button class="btn" onclick="testUpdateDocument()">测试更新文档</button>
+            <button class="btn" onclick="testDeleteDocument()">测试删除文档</button>
+            <button class="btn" onclick="clearTestData()">清空测试数据</button>
+        </div>
+
+        <div class="test-section">
+            <h3>📝 操作日志</h3>
+            <div id="log" class="log"></div>
+            <button class="btn" onclick="clearLog()">清空日志</button>
+        </div>
+
+        <div class="test-section">
+            <h3>📋 测试数据</h3>
+            <div id="test-data" class="log"></div>
+            <button class="btn" onclick="refreshTestData()">刷新数据</button>
+        </div>
+    </div>
+
+    <!-- 加载Firebase配置 -->
+    <script src="js/config/firebase.js"></script>
+    
+    <!-- 测试脚本 -->
+    <script>
+        let testDocId = null;
+        
+        // 日志函数
+        function log(message, type = 'info') {
+            const logElement = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.style.color = type === 'error' ? '#dc3545' : type === 'success' ? '#28a745' : '#6c757d';
+            logEntry.textContent = `[${timestamp}] ${message}`;
+            logElement.appendChild(logEntry);
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+
+        // 更新状态显示
+        function updateStatus() {
+            const firebaseStatus = document.getElementById('firebase-status');
+            const storageMode = document.getElementById('storage-mode');
+            
+            if (window.FirebaseConfig && window.FirebaseConfig.isAvailable()) {
+                firebaseStatus.textContent = '✅ Firebase 已连接';
+                firebaseStatus.className = 'status success';
+            } else {
+                firebaseStatus.textContent = '⚠️ Firebase 不可用 (可能被浏览器阻止)';
+                firebaseStatus.className = 'status warning';
+            }
+            
+            if (window.FirebaseUtils) {
+                const mode = window.FirebaseUtils.getStorageMode();
+                storageMode.textContent = `存储模式: ${mode === 'firebase' ? '☁️ Firebase云端' : '📱 本地存储'}`;
+                storageMode.className = mode === 'firebase' ? 'status success' : 'status warning';
+            }
+        }
+
+        // 测试添加文档
+        async function testAddDocument() {
+            try {
+                log('开始测试添加文档...');
+                const result = await window.FirebaseUtils.addDocument('test-collection', {
+                    name: '测试文档',
+                    description: '这是一个测试文档',
+                    timestamp: new Date().toISOString()
+                });
+                
+                if (result.success) {
+                    testDocId = result.id;
+                    log(`✅ 文档添加成功，ID: ${result.id}`, 'success');
+                } else {
+                    log(`❌ 文档添加失败: ${result.error}`, 'error');
+                }
+                
+                refreshTestData();
+            } catch (error) {
+                log(`❌ 添加文档时发生错误: ${error.message}`, 'error');
+            }
+        }
+
+        // 测试获取文档
+        async function testGetDocuments() {
+            try {
+                log('开始测试获取文档...');
+                const result = await window.FirebaseUtils.getDocuments('test-collection');
+                
+                if (result.success) {
+                    log(`✅ 获取文档成功，共 ${result.data.length} 条记录`, 'success');
+                } else {
+                    log(`❌ 获取文档失败: ${result.error}`, 'error');
+                }
+                
+                refreshTestData();
+            } catch (error) {
+                log(`❌ 获取文档时发生错误: ${error.message}`, 'error');
+            }
+        }
+
+        // 测试更新文档
+        async function testUpdateDocument() {
+            if (!testDocId) {
+                log('⚠️ 请先添加一个文档', 'error');
+                return;
+            }
+            
+            try {
+                log('开始测试更新文档...');
+                const result = await window.FirebaseUtils.updateDocument('test-collection', testDocId, {
+                    description: '这是一个已更新的测试文档',
+                    lastModified: new Date().toISOString()
+                });
+                
+                if (result.success) {
+                    log(`✅ 文档更新成功`, 'success');
+                } else {
+                    log(`❌ 文档更新失败: ${result.error}`, 'error');
+                }
+                
+                refreshTestData();
+            } catch (error) {
+                log(`❌ 更新文档时发生错误: ${error.message}`, 'error');
+            }
+        }
+
+        // 测试删除文档
+        async function testDeleteDocument() {
+            if (!testDocId) {
+                log('⚠️ 请先添加一个文档', 'error');
+                return;
+            }
+            
+            try {
+                log('开始测试删除文档...');
+                const result = await window.FirebaseUtils.deleteDocument('test-collection', testDocId);
+                
+                if (result.success) {
+                    log(`✅ 文档删除成功`, 'success');
+                    testDocId = null;
+                } else {
+                    log(`❌ 文档删除失败: ${result.error}`, 'error');
+                }
+                
+                refreshTestData();
+            } catch (error) {
+                log(`❌ 删除文档时发生错误: ${error.message}`, 'error');
+            }
+        }
+
+        // 刷新测试数据显示
+        async function refreshTestData() {
+            try {
+                const result = await window.FirebaseUtils.getDocuments('test-collection');
+                const dataElement = document.getElementById('test-data');
+                
+                if (result.success) {
+                    dataElement.textContent = JSON.stringify(result.data, null, 2);
+                } else {
+                    dataElement.textContent = '获取数据失败: ' + result.error;
+                }
+            } catch (error) {
+                document.getElementById('test-data').textContent = '获取数据时发生错误: ' + error.message;
+            }
+        }
+
+        // 清空测试数据
+        function clearTestData() {
+            localStorage.removeItem('test-collection');
+            log('🗑️ 本地测试数据已清空', 'success');
+            refreshTestData();
+        }
+
+        // 清空日志
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+        }
+
+        // 监听Firebase状态变化
+        window.addEventListener('firebaseReady', () => {
+            log('🔥 Firebase 初始化完成', 'success');
+            updateStatus();
+        });
+
+        window.addEventListener('firebaseUnavailable', () => {
+            log('⚠️ Firebase 不可用，已切换到本地存储模式', 'warning');
+            updateStatus();
+        });
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            log('📄 页面加载完成，开始检测Firebase状态...');
+            
+            // 延迟更新状态，等待Firebase初始化
+            setTimeout(() => {
+                updateStatus();
+                refreshTestData();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

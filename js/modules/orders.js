@@ -14,6 +14,7 @@ class OrderManager {
         this.batchDeleteBtn = document.getElementById('batchDeleteOrdersBtn');
         this.batchPrintBtn = document.getElementById('batchPrintOrdersBtn');
         this.exportBtn = document.getElementById('exportOrdersBtn');
+        this.exportMonthlyBtn = document.getElementById('exportMonthlyOrdersBtn');
 
         if (!this.tableBody) {
             console.log('未找到orderTable tbody元素，可能不在订单管理页面');
@@ -37,13 +38,15 @@ class OrderManager {
         this.batchDeleteBtn = document.getElementById('batchDeleteOrdersBtn');
         this.batchPrintBtn = document.getElementById('batchPrintOrdersBtn');
         this.exportBtn = document.getElementById('exportOrdersBtn');
+        this.exportMonthlyBtn = document.getElementById('exportMonthlyOrdersBtn');
 
         console.log('DOM元素引用状态:', {
             selectAllCheckbox: !!this.selectAllCheckbox,
             toggleSelectAllBtn: !!this.toggleSelectAllBtn,
             batchDeleteBtn: !!this.batchDeleteBtn,
             batchPrintBtn: !!this.batchPrintBtn,
-            exportBtn: !!this.exportBtn
+            exportBtn: !!this.exportBtn,
+            exportMonthlyBtn: !!this.exportMonthlyBtn
         });
 
         // 移除可能存在的旧事件监听器
@@ -88,6 +91,14 @@ class OrderManager {
         } else {
             console.warn('未找到导出选中按钮 #exportOrdersBtn');
         }
+
+        // 绑定导出本月订单按钮事件
+        if (this.exportMonthlyBtn) {
+            this.exportMonthlyBtn.addEventListener('click', this.handleExportMonthly.bind(this));
+            console.log('已绑定导出本月订单按钮事件');
+        } else {
+            console.warn('未找到导出本月订单按钮 #exportMonthlyOrdersBtn');
+        }
     }
 
     // 移除事件监听器
@@ -122,6 +133,12 @@ class OrderManager {
             this.exportBtn.parentNode.replaceChild(newBtn, this.exportBtn);
             this.exportBtn = newBtn;
         }
+
+        if (this.exportMonthlyBtn) {
+            const newBtn = this.exportMonthlyBtn.cloneNode(true);
+            this.exportMonthlyBtn.parentNode.replaceChild(newBtn, this.exportMonthlyBtn);
+            this.exportMonthlyBtn = newBtn;
+        }
     }
 
     // 事件处理函数
@@ -151,6 +168,11 @@ class OrderManager {
     handleExport() {
         console.log('点击导出选中按钮');
         this.exportSelectedOrders();
+    }
+
+    handleExportMonthly() {
+        console.log('点击导出本月订单按钮');
+        this.exportMonthlyOrders();
     }
 
     // 确保表格元素可用
@@ -440,16 +462,106 @@ class OrderManager {
                 return;
             }
 
+            // 使用自定义导出格式
+            this.exportCustomFormat(selectedOrders);
+
+        } catch (error) {
+            console.error('导出订单失败:', error);
+            Utils.UIUtils.showError('导出订单失败');
+        }
+    }
+
+    // 自定义格式导出：车队、车型、shipment、po、提货名称、送货名称、提送货日期
+    exportCustomFormat(orders, isMonthly = false) {
+        try {
+            // 定义导出的列标题
+            const headers = ['车队', '车型', 'Shipment', 'PO', '提货名称', '送货名称', '提货日期', '送货日期'];
+            
+            // 转换数据格式
+            const exportData = orders.map(order => {
+                return {
+                    '车队': order.transportTeam || order.customer || '',
+                    '车型': order.vehicleType || '',
+                    'Shipment': order.cw1no || '',
+                    'PO': order.po || order.id || '',
+                    '提货名称': order.pickupLocation || order.pickupFactory || '',
+                    '送货名称': order.deliveryLocation || order.deliveryFactory || '',
+                    '提货日期': order.pickupDateTime || '',
+                    '送货日期': order.deliveryDateTime || ''
+                };
+            });
+
+            // 生成文件名
+            let filename;
+            if (isMonthly) {
+                const now = new Date();
+                const year = now.getFullYear();
+                const month = (now.getMonth() + 1).toString().padStart(2, '0');
+                filename = `本月订单导出_${year}年${month}月.csv`;
+            } else {
+                const currentDate = new Date().toISOString().split('T')[0];
+                filename = `订单导出_${currentDate}.csv`;
+            }
+
+            // 导出CSV
             if (typeof Utils !== 'undefined' && Utils.ExportUtils) {
-                Utils.ExportUtils.exportToCSV(selectedOrders, 'selected_orders');
-                Utils.UIUtils.showSuccess(`成功导出 ${selectedOrders.length} 个订单`);
+                Utils.ExportUtils.exportToCSV(exportData, filename, headers);
+                const exportType = isMonthly ? '本月' : '选中';
+                Utils.UIUtils.showSuccess(`成功导出${exportType} ${orders.length} 个订单`);
             } else {
                 Utils.UIUtils.showError('导出功能暂不可用');
             }
 
         } catch (error) {
-            console.error('导出订单失败:', error);
-            Utils.UIUtils.showError('导出订单失败');
+            console.error('自定义格式导出失败:', error);
+            Utils.UIUtils.showError('导出失败');
+        }
+    }
+
+    // 导出本月订单
+    async exportMonthlyOrders() {
+        try {
+            // 获取所有订单数据
+            const allOrders = await Utils.StorageUtils.getOrders();
+            
+            if (!allOrders || !Array.isArray(allOrders) || allOrders.length === 0) {
+                Utils.UIUtils.showWarning('暂无订单数据可导出');
+                return;
+            }
+
+            // 获取当前月份的开始和结束日期
+            const now = new Date();
+            const currentYear = now.getFullYear();
+            const currentMonth = now.getMonth();
+            const monthStart = new Date(currentYear, currentMonth, 1);
+            const monthEnd = new Date(currentYear, currentMonth + 1, 0, 23, 59, 59);
+
+            console.log('筛选本月订单:', {
+                monthStart: monthStart.toISOString(),
+                monthEnd: monthEnd.toISOString(),
+                totalOrders: allOrders.length
+            });
+
+            // 筛选本月的订单
+            const monthlyOrders = allOrders.filter(order => {
+                // 优先使用创建时间，其次使用更新时间
+                const orderDate = new Date(order.createTime || order.updateTime || 0);
+                return orderDate >= monthStart && orderDate <= monthEnd;
+            });
+
+            console.log('本月订单数量:', monthlyOrders.length);
+
+            if (monthlyOrders.length === 0) {
+                Utils.UIUtils.showWarning('本月暂无订单数据');
+                return;
+            }
+
+            // 使用自定义格式导出
+            this.exportCustomFormat(monthlyOrders, true);
+
+        } catch (error) {
+            console.error('导出本月订单失败:', error);
+            Utils.UIUtils.showError('导出本月订单失败');
         }
     }
 
@@ -884,6 +996,10 @@ function exportSelectedOrders() {
     return window.orderManager.exportSelectedOrders();
 }
 
+function exportMonthlyOrders() {
+    return window.orderManager.exportMonthlyOrders();
+}
+
 async function deleteOrder(orderId) {
     return await window.orderManager.deleteOrder(orderId);
 }
@@ -909,6 +1025,7 @@ window.reprintDispatchSheet = reprintDispatchSheet;
 window.batchDeleteOrders = batchDeleteOrders;
 window.batchPrintOrders = batchPrintOrders;
 window.exportSelectedOrders = exportSelectedOrders;
+window.exportMonthlyOrders = exportMonthlyOrders;
 window.toggleSelectAll = toggleSelectAll;
 window.updateBatchButtons = updateBatchButtons;
 window.fillEditForm = fillEditForm;
