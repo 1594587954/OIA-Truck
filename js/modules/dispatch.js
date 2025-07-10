@@ -236,59 +236,70 @@ function openRouteManagement() {
 
 // 清空派车单表单
 function clearDispatchForm() {
-    // 清空所有输入字段
-    const cw1noEl = document.getElementById('cw1no');
-    const poEl = document.getElementById('po');
-    const routeEl = document.getElementById('route');
-    const routeSearchEl = document.getElementById('routeSearch');
-    const selectedRouteIdEl = document.getElementById('selectedRouteId');
+    console.log('开始清空派车表单...');
+    
+    // 使用字段映射配置清空表单
+    if (window.fieldMapping) {
+        window.fieldMapping.clearAllFields();
+    } else {
+        // 降级处理：手动清空主要字段
+        console.warn('字段映射配置未加载，使用降级清空方式');
+        clearFormFieldsManually();
+    }
+    
+    // 清空提货点和送货点容器
+    clearPickupAndDeliveryPoints();
+    
+    // 重置路线选择模式到下拉选择
+    resetRouteSelectionMode();
+    
+    console.log('派车表单已清空');
+}
+
+// 手动清空表单字段（降级处理）
+function clearFormFieldsManually() {
+    const fieldIds = [
+        'cw1no', 'po', 'route', 'routeSearch', 'selectedRouteId',
+        'transportTeam', 'vehicleType',
+        'pickupFactory', 'pickupContact', 'pickupAddress', 'pickupDate',
+        'deliveryFactory', 'deliveryContact', 'deliveryAddress', 'deliveryDate',
+        'parkName', 'parkContact', 'parkAddress',
+        'cargoType', 'cargoWeight', 'cargoVolume', 'cargoPieces', 'cargoNotes'
+    ];
+    
+    fieldIds.forEach(fieldId => {
+        const element = document.getElementById(fieldId);
+        if (element) {
+            if (element.tagName === 'SELECT') {
+                element.selectedIndex = 0;
+            } else {
+                element.value = '';
+            }
+        }
+    });
+}
+
+// 重置路线选择模式
+function resetRouteSelectionMode() {
+    const routeSelect = document.getElementById('route');
+    const routeSearchContainer = document.getElementById('routeSearchContainer');
     const routeDropdownEl = document.getElementById('routeDropdown');
-    const transportTeamEl = document.getElementById('transportTeam');
-    const vehicleTypeEl = document.getElementById('vehicleType');
-    const pickupFactoryEl = document.getElementById('pickupFactory');
-    const pickupContactEl = document.getElementById('pickupContact');
-    const pickupAddressEl = document.getElementById('pickupAddress');
-    const pickupDateEl = document.getElementById('pickupDate');
-    const deliveryFactoryEl = document.getElementById('deliveryFactory');
-    const deliveryContactEl = document.getElementById('deliveryContact');
-    const deliveryAddressEl = document.getElementById('deliveryAddress');
-    const deliveryDateEl = document.getElementById('deliveryDate');
-    const cargoTypeEl = document.getElementById('cargoType');
-    const cargoWeightEl = document.getElementById('cargoWeight');
-    const cargoVolumeEl = document.getElementById('cargoVolume');
-    const cargoPiecesEl = document.getElementById('cargoPieces');
-    const cargoNotesEl = document.getElementById('cargoNotes');
-    const parkNameEl = document.getElementById('parkName');
-    const parkContactEl = document.getElementById('parkContact');
-    const parkAddressEl = document.getElementById('parkAddress');
-
-    // 安全地清空字段值
-    if (cw1noEl) cw1noEl.value = '';
-    if (poEl) poEl.value = '';
-    if (routeEl) routeEl.selectedIndex = 0;
-    if (routeSearchEl) routeSearchEl.value = '';
-    if (selectedRouteIdEl) selectedRouteIdEl.value = '';
-    if (routeDropdownEl) routeDropdownEl.style.display = 'none';
-    if (transportTeamEl) transportTeamEl.selectedIndex = 0;
-    if (vehicleTypeEl) vehicleTypeEl.value = '';
-    if (pickupFactoryEl) pickupFactoryEl.value = '';
-    if (pickupContactEl) pickupContactEl.value = '';
-    if (pickupAddressEl) pickupAddressEl.value = '';
-    if (pickupDateEl) pickupDateEl.value = '';
-    if (deliveryFactoryEl) deliveryFactoryEl.value = '';
-    if (deliveryContactEl) deliveryContactEl.value = '';
-    if (deliveryAddressEl) deliveryAddressEl.value = '';
-    if (deliveryDateEl) deliveryDateEl.value = '';
-    if (cargoTypeEl) cargoTypeEl.value = '';
-    if (cargoWeightEl) cargoWeightEl.value = '';
-    if (cargoVolumeEl) cargoVolumeEl.value = '';
-    if (cargoPiecesEl) cargoPiecesEl.value = '';
-    if (cargoNotesEl) cargoNotesEl.value = '';
-
-    // 清空物流园信息
-    if (parkNameEl) parkNameEl.value = '';
-    if (parkContactEl) parkContactEl.value = '';
-    if (parkAddressEl) parkAddressEl.value = '';
+    const toggleBtn = document.getElementById('toggleSearchBtn');
+    
+    // 切换回下拉选择模式
+    if (routeSelect && routeSearchContainer) {
+        routeSelect.style.display = 'block';
+        routeSearchContainer.style.display = 'none';
+        if (toggleBtn) {
+            toggleBtn.innerHTML = '<i class="fas fa-search"></i>';
+            toggleBtn.title = '切换到搜索模式';
+        }
+    }
+    
+    // 隐藏路线下拉框
+    if (routeDropdownEl) {
+        routeDropdownEl.style.display = 'none';
+    }
 }
 
 // 获取派车单表单数据

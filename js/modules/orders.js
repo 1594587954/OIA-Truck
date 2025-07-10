@@ -627,13 +627,15 @@ class OrderManager {
 
             console.log('提取的订单数据:', orderData);
 
-            // 填充编辑表单
-            this.fillEditForm(orderData);
-
             // 切换到表单视图
             if (typeof showDispatchForm === 'function') {
                 showDispatchForm();
             }
+
+            // 延迟填充表单，确保DOM已更新
+            setTimeout(() => {
+                this.fillEditFormWithMapping(orderData);
+            }, 100);
 
         } catch (error) {
             console.error('编辑订单失败:', error);
@@ -641,7 +643,183 @@ class OrderManager {
         }
     }
 
-    // 填充编辑表单
+    // 填充编辑表单 - 使用字段映射
+    fillEditFormWithMapping(orderData) {
+        console.log('使用字段映射填充编辑表单:', orderData);
+        
+        // 确保字段映射配置已加载
+        if (!window.fieldMapping) {
+            console.error('字段映射配置未加载');
+            return;
+        }
+        
+        // 基本信息映射
+        this.fillBasicInfo(orderData);
+        
+        // 提货信息映射
+        this.fillPickupInfo(orderData);
+        
+        // 送货信息映射
+        this.fillDeliveryInfo(orderData);
+        
+        // 物流园信息映射
+        this.fillLogisticsParkInfo(orderData);
+        
+        // 货物信息映射
+        this.fillCargoInfo(orderData);
+        
+        // 运输团队信息映射
+        this.fillTransportInfo(orderData);
+        
+        console.log('表单填充完成');
+    }
+    
+    // 填充基本信息
+    fillBasicInfo(orderData) {
+        // PO和Shipment信息
+        const poEl = document.getElementById('po');
+        const cw1noEl = document.getElementById('cw1no');
+        
+        if (poEl && orderData.po) poEl.value = orderData.po;
+        if (cw1noEl && orderData.cw1no) cw1noEl.value = orderData.cw1no;
+        
+        // 如果没有单独的po和cw1no，尝试从orderNumber解析
+        if (orderData.orderNumber && (!orderData.po || !orderData.cw1no)) {
+            const parts = orderData.orderNumber.split('/');
+            if (parts.length === 2) {
+                if (cw1noEl) cw1noEl.value = parts[0];
+                if (poEl) poEl.value = parts[1];
+            } else {
+                // 如果只有一个值，优先填入cw1no
+                if (cw1noEl) cw1noEl.value = orderData.orderNumber;
+            }
+        }
+    }
+    
+    // 填充提货信息
+    fillPickupInfo(orderData) {
+        const pickupFactoryEl = document.getElementById('pickupFactory');
+        const pickupContactEl = document.getElementById('pickupContact');
+        const pickupAddressEl = document.getElementById('pickupAddress');
+        const pickupDateEl = document.getElementById('pickupDate');
+        const pickupTimeEl = document.getElementById('pickupTime');
+        
+        if (pickupFactoryEl && orderData.pickupLocation) {
+            pickupFactoryEl.value = orderData.pickupLocation;
+        }
+        
+        if (pickupContactEl && orderData.pickupContact) {
+            pickupContactEl.value = orderData.pickupContact;
+        }
+        
+        if (pickupAddressEl && orderData.pickupAddress) {
+            pickupAddressEl.value = orderData.pickupAddress;
+        }
+        
+        // 处理提货日期时间
+        if (orderData.pickupDateTime) {
+            const dateTime = window.fieldMapping.formatDateTime(orderData.pickupDateTime);
+            if (pickupDateEl && dateTime.date) pickupDateEl.value = dateTime.date;
+            if (pickupTimeEl && dateTime.time) pickupTimeEl.value = dateTime.time;
+        }
+    }
+    
+    // 填充送货信息
+    fillDeliveryInfo(orderData) {
+        const deliveryFactoryEl = document.getElementById('deliveryFactory');
+        const deliveryContactEl = document.getElementById('deliveryContact');
+        const deliveryAddressEl = document.getElementById('deliveryAddress');
+        const deliveryDateEl = document.getElementById('deliveryDate');
+        const deliveryTimeEl = document.getElementById('deliveryTime');
+        
+        if (deliveryFactoryEl && orderData.deliveryLocation) {
+            deliveryFactoryEl.value = orderData.deliveryLocation;
+        }
+        
+        if (deliveryContactEl && orderData.deliveryContact) {
+            deliveryContactEl.value = orderData.deliveryContact;
+        }
+        
+        if (deliveryAddressEl && orderData.deliveryAddress) {
+            deliveryAddressEl.value = orderData.deliveryAddress;
+        }
+        
+        // 处理送货日期时间
+        if (orderData.deliveryDateTime) {
+            const dateTime = window.fieldMapping.formatDateTime(orderData.deliveryDateTime);
+            if (deliveryDateEl && dateTime.date) deliveryDateEl.value = dateTime.date;
+            if (deliveryTimeEl && dateTime.time) deliveryTimeEl.value = dateTime.time;
+        }
+    }
+    
+    // 填充物流园信息
+    fillLogisticsParkInfo(orderData) {
+        const parkNameEl = document.getElementById('parkName');
+        const parkContactEl = document.getElementById('parkContact');
+        const parkAddressEl = document.getElementById('parkAddress');
+        
+        if (parkNameEl && orderData.logisticsPark) {
+            parkNameEl.value = orderData.logisticsPark;
+        }
+        
+        if (parkContactEl && orderData.parkContact) {
+            parkContactEl.value = orderData.parkContact;
+        }
+        
+        if (parkAddressEl && orderData.parkAddress) {
+            parkAddressEl.value = orderData.parkAddress;
+        }
+    }
+    
+    // 填充货物信息
+    fillCargoInfo(orderData) {
+        const cargoTypeEl = document.getElementById('cargoType');
+        const cargoWeightEl = document.getElementById('cargoWeight');
+        const cargoVolumeEl = document.getElementById('cargoVolume');
+        const cargoPiecesEl = document.getElementById('cargoPieces');
+        const cargoNotesEl = document.getElementById('cargoNotes');
+        
+        if (cargoTypeEl && orderData.cargoInfo) {
+            cargoTypeEl.value = orderData.cargoInfo;
+        }
+        
+        if (cargoWeightEl && orderData.cargoWeight) {
+            cargoWeightEl.value = orderData.cargoWeight;
+        }
+        
+        if (cargoVolumeEl && orderData.cargoVolume) {
+            cargoVolumeEl.value = orderData.cargoVolume;
+        }
+        
+        if (cargoPiecesEl && orderData.cargoPieces) {
+            cargoPiecesEl.value = orderData.cargoPieces;
+        }
+        
+        if (cargoNotesEl && orderData.cargoNotes) {
+            cargoNotesEl.value = orderData.cargoNotes;
+        }
+    }
+    
+    // 填充运输团队信息
+    fillTransportInfo(orderData) {
+        const transportTeamEl = document.getElementById('transportTeam');
+        const vehicleTypeEl = document.getElementById('vehicleType');
+        const routeEl = document.getElementById('route');
+        
+        if (transportTeamEl && orderData.transportTeam) {
+            transportTeamEl.value = orderData.transportTeam;
+        }
+        
+        if (vehicleTypeEl && orderData.vehicleType) {
+            vehicleTypeEl.value = orderData.vehicleType;
+        }
+        
+        if (routeEl && orderData.route) {
+            routeEl.value = orderData.route;
+        }
+    }
+    
+    // 保留原有的fillEditForm方法以保持兼容性
     fillEditForm(orderData) {
         console.log('填充编辑表单:', orderData);
 
@@ -727,17 +905,28 @@ class OrderManager {
                 cw1no: orderData.cw1no || orderData.orderNumber || '',
                 po: orderData.po || orderData.id || '',
 
-                // 提货信息
+                // 提货信息（单点，用于兼容）
                 pickupFactory: orderData.pickupFactory || orderData.pickupLocation || '未填写',
                 pickupAddress: orderData.pickupAddress || orderData.customerAddress || '未填写',
                 pickupContact: orderData.pickupContact || orderData.customer || '未填写',
                 pickupDate: orderData.pickupDate || orderData.pickupDateTime || '未设置',
 
-                // 送货信息
+                // 多个提货点
+                pickupPoints: orderData.pickupPoints || [],
+
+                // 物流园信息
+                parkName: orderData.parkName || '',
+                parkContact: orderData.parkContact || '',
+                parkAddress: orderData.parkAddress || '',
+
+                // 送货信息（单点，用于兼容）
                 deliveryFactory: orderData.deliveryFactory || orderData.deliveryLocation || '未填写',
                 deliveryAddress: orderData.deliveryAddress || orderData.deliveryLocation || '未填写',
                 deliveryContact: orderData.deliveryContact || orderData.customer || '未填写',
                 deliveryDate: orderData.deliveryDate || orderData.deliveryDateTime || '未设置',
+
+                // 多个送货点
+                deliveryPoints: orderData.deliveryPoints || [],
 
                 // 货物信息
                 cargoType: orderData.cargoType || orderData.items?.[0]?.name || '未指定',
@@ -785,6 +974,70 @@ class OrderManager {
                 // 获取公司logo URL
                 const logoUrl = Utils.CONSTANTS.LOGO_URL;
 
+                // 生成多个提货点的HTML
+                const generatePickupPointsHTML = (pickupPoints) => {
+                    if (!pickupPoints || pickupPoints.length === 0) {
+                        // 如果没有多点数据，使用单点数据
+                        return `
+                            <div style="margin-bottom: 15px; padding: 8px; border: 1px solid #ddd; border-radius: 3px; background-color: #fafafa;">
+                                <div style="display: flex; flex-wrap: wrap;">
+                                    <p style="margin: 3px 0; width: 100%;"><strong>地点:</strong> ${formData.pickupFactory || '未填写'}</p>
+                                    <p style="margin: 3px 0; width: 100%;"><strong>地址:</strong> ${formData.pickupAddress || '未填写'}</p>
+                                    <p style="margin: 3px 0; width: 48%;"><strong>联系人:</strong> ${formData.pickupContact || '未填写'}</p>
+                                    <p style="margin: 3px 0; width: 48%;"><strong>日期:</strong> ${formData.pickupDate || '未设置'}</p>
+                                </div>
+                            </div>
+                        `;
+                    }
+
+                    return pickupPoints.map((point, index) => {
+                        const pointNumber = pickupPoints.length > 1 ? `提货点${index + 1}` : '提货点';
+                        return `
+                            <div style="margin-bottom: 15px; padding: 8px; border: 1px solid #ddd; border-radius: 3px; background-color: #fafafa;">
+                                <h5 style="margin: 0 0 8px 0; color: #1a3a6c; font-size: 14px; font-weight: bold;">${pointNumber}</h5>
+                                <div style="display: flex; flex-wrap: wrap;">
+                                    <p style="margin: 3px 0; width: 100%;"><strong>地点:</strong> ${point.factory || '未填写'}</p>
+                                    <p style="margin: 3px 0; width: 100%;"><strong>地址:</strong> ${point.address || '未填写'}</p>
+                                    <p style="margin: 3px 0; width: 48%;"><strong>联系人:</strong> ${point.contact || '未填写'}</p>
+                                    <p style="margin: 3px 0; width: 48%;"><strong>日期:</strong> ${point.date || '未设置'}</p>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                };
+
+                // 生成多个送货点的HTML
+                const generateDeliveryPointsHTML = (deliveryPoints) => {
+                    if (!deliveryPoints || deliveryPoints.length === 0) {
+                        // 如果没有多点数据，使用单点数据
+                        return `
+                            <div style="margin-bottom: 15px; padding: 8px; border: 1px solid #ddd; border-radius: 3px; background-color: #fafafa;">
+                                <div style="display: flex; flex-wrap: wrap;">
+                                    <p style="margin: 3px 0; width: 100%;"><strong>地点:</strong> ${formData.deliveryFactory || '未填写'}</p>
+                                    <p style="margin: 3px 0; width: 100%;"><strong>地址:</strong> ${formData.deliveryAddress || '未填写'}</p>
+                                    <p style="margin: 3px 0; width: 48%;"><strong>联系人:</strong> ${formData.deliveryContact || '未填写'}</p>
+                                    <p style="margin: 3px 0; width: 48%;"><strong>日期:</strong> ${formData.deliveryDate || '未设置'}</p>
+                                </div>
+                            </div>
+                        `;
+                    }
+
+                    return deliveryPoints.map((point, index) => {
+                        const pointNumber = deliveryPoints.length > 1 ? `送货点${index + 1}` : '送货点';
+                        return `
+                            <div style="margin-bottom: 15px; padding: 8px; border: 1px solid #ddd; border-radius: 3px; background-color: #fafafa;">
+                                <h5 style="margin: 0 0 8px 0; color: #1a3a6c; font-size: 14px; font-weight: bold;">${pointNumber}</h5>
+                                <div style="display: flex; flex-wrap: wrap;">
+                                    <p style="margin: 3px 0; width: 100%;"><strong>地点:</strong> ${point.factory || '未填写'}</p>
+                                    <p style="margin: 3px 0; width: 100%;"><strong>地址:</strong> ${point.address || '未填写'}</p>
+                                    <p style="margin: 3px 0; width: 48%;"><strong>联系人:</strong> ${point.contact || '未填写'}</p>
+                                    <p style="margin: 3px 0; width: 48%;"><strong>日期:</strong> ${point.date || '未设置'}</p>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                };
+
                 // 创建派车单HTML内容
                 pdfContainer.innerHTML = `
                     <div style="${Utils.CONSTANTS.PDF_CONFIG.LOGO_CONTAINER_STYLE}">
@@ -803,28 +1056,27 @@ class OrderManager {
                         </div>
                         <div style="width: 48%;">
                             <p style="margin: 3px 0;"><strong>PO:</strong> ${formData.cw1no || '无'}</p>
-                <p style="margin: 3px 0;"><strong>Shipment:</strong> ${formData.po}</p>
+                            <p style="margin: 3px 0;"><strong>Shipment:</strong> ${formData.po}</p>
                         </div>
                     </div>
 
                     <div style="margin-bottom: 12px; margin-top: 8px; padding: 8px 15px; border-radius: 5px; background-color: #f9f9f9;">
-                        <h4 style="margin: 0 0 8px 0; border-bottom: 1px solid #eee; padding-bottom: 4px; color: #1a3a6c; font-size: 16px;">提货信息</h4>
+                        <h4 style="margin: 0 0 8px 0; border-bottom: 1px solid #eee; padding-bottom: 4px; color: #1a3a6c; font-size: 16px;">提货信息 ${formData.pickupPoints && formData.pickupPoints.length > 1 ? `(共${formData.pickupPoints.length}个提货点)` : ''}</h4>
+                        ${generatePickupPointsHTML(formData.pickupPoints)}
+                    </div>
+
+                    <div style="margin-bottom: 12px; margin-top: 8px; padding: 8px 15px; border-radius: 5px; background-color: #f9f9f9;">
+                        <h4 style="margin: 0 0 8px 0; border-bottom: 1px solid #eee; padding-bottom: 4px; color: #1a3a6c; font-size: 16px;">物流园信息</h4>
                         <div style="display: flex; flex-wrap: wrap;">
-                            <p style="margin: 4px 0; width: 100%;"><strong>地点:</strong> ${formData.pickupFactory || '未填写'}</p>
-                            <p style="margin: 4px 0; width: 100%;"><strong>地址:</strong> ${formData.pickupAddress || '未填写'}</p>
-                            <p style="margin: 4px 0; width: 48%;"><strong>联系人:</strong> ${formData.pickupContact || '未填写'}</p>
-                            <p style="margin: 4px 0; width: 48%;"><strong>日期:</strong> ${formData.pickupDate || '未设置'}</p>
+                            <p style="margin: 4px 0; width: 48%;"><strong>物流园名称:</strong> ${formData.parkName || orderData.parkName || '无'}</p>
+                            <p style="margin: 4px 0; width: 48%;"><strong>联系人:</strong> ${formData.parkContact || orderData.parkContact || '无'}</p>
+                            <p style="margin: 4px 0; width: 100%;"><strong>物流园地址:</strong> ${formData.parkAddress || orderData.parkAddress || '无'}</p>
                         </div>
                     </div>
 
                     <div style="margin-bottom: 12px; margin-top: 8px; padding: 8px 15px; border-radius: 5px; background-color: #f9f9f9;">
-                        <h4 style="margin: 0 0 8px 0; border-bottom: 1px solid #eee; padding-bottom: 4px; color: #1a3a6c; font-size: 16px;">送货信息</h4>
-                        <div style="display: flex; flex-wrap: wrap;">
-                            <p style="margin: 4px 0; width: 100%;"><strong>地点:</strong> ${formData.deliveryFactory || '未填写'}</p>
-                            <p style="margin: 4px 0; width: 100%;"><strong>地址:</strong> ${formData.deliveryAddress || '未填写'}</p>
-                            <p style="margin: 4px 0; width: 48%;"><strong>联系人:</strong> ${formData.deliveryContact || '未填写'}</p>
-                            <p style="margin: 4px 0; width: 48%;"><strong>日期:</strong> ${formData.deliveryDate || '未设置'}</p>
-                        </div>
+                        <h4 style="margin: 0 0 8px 0; border-bottom: 1px solid #eee; padding-bottom: 4px; color: #1a3a6c; font-size: 16px;">送货信息 ${formData.deliveryPoints && formData.deliveryPoints.length > 1 ? `(共${formData.deliveryPoints.length}个送货点)` : ''}</h4>
+                        ${generateDeliveryPointsHTML(formData.deliveryPoints)}
                     </div>
 
                     <div style="margin-bottom: 12px; margin-top: 8px; padding: 8px 15px; border-radius: 5px; background-color: #f9f9f9;">

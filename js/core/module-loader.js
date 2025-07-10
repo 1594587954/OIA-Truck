@@ -3,6 +3,7 @@ class ModuleLoader {
     constructor() {
         this.modules = new Map();
         this.coreModules = ['data-manager'];
+        this.configModules = ['field-mapping']; // 配置模块
         this.loadOrder = [
             'performance-monitor', // 性能监控优先加载
             'utils',
@@ -54,11 +55,19 @@ class ModuleLoader {
         try {
             console.log('开始快速加载模块...');
 
-            // 并行加载核心模块和关键业务模块
+            // 分批加载模块：配置模块 -> 核心模块 -> 关键业务模块 -> 非关键模块
+            
+            // 第一批：配置模块（最优先）
+            const configBatch = this.configModules.map(module => 
+                this.loadScript(`js/config/${module}.js`)
+            );
+            await Promise.all(configBatch);
+            console.log('配置模块加载完成');
+            
+            // 第二批：核心模块和关键业务模块
             const criticalModules = ['performance-monitor', 'utils', 'storage', 'data-backup', 'dashboard', 'navigation'];
             const nonCriticalModules = ['orders', 'customer', 'dispatch', 'transport-team'];
 
-            // 第一批：核心模块 + 关键业务模块
             const firstBatch = [
                 ...this.coreModules.map(module => this.loadScript(`js/core/${module}.js`)),
                 ...criticalModules.map(module => this.loadScript(`js/modules/${module}.js`))

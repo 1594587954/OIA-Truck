@@ -1486,21 +1486,50 @@ function showDispatchForm() {
 
 // 清空派车单表单
 function clearDispatchForm() {
-    // 基本表单字段
+    console.log('Navigation: 开始清空派车表单...');
+    
+    // 使用字段映射配置清空表单
+    if (window.fieldMapping) {
+        window.fieldMapping.clearAllFields();
+    } else {
+        // 降级处理：手动清空主要字段
+        console.warn('字段映射配置未加载，使用降级清空方式');
+        clearFormFieldsManuallyInNavigation();
+    }
+    
+    // 清空提货点和送货点容器
+    clearPickupAndDeliveryPointsInNavigation();
+    
+    // 重置路线选择模式
+    resetRouteSelectionModeInNavigation();
+    
+    console.log('Navigation: 派车表单已清空');
+}
+
+// 手动清空表单字段（Navigation模块降级处理）
+function clearFormFieldsManuallyInNavigation() {
     const formFields = [
-        'cw1no', 'po', 'transportTeam', 'route',
+        'cw1no', 'po', 'transportTeam', 'route', 'routeSearch', 'selectedRouteId', 'vehicleType',
         'pickupFactory', 'pickupContact', 'pickupAddress', 'pickupDate', 'pickupTime',
         'deliveryFactory', 'deliveryContact', 'deliveryAddress', 'deliveryDate', 'deliveryTime',
-        'cargoType', 'cargoWeight', 'cargoVolume'
+        'parkName', 'parkContact', 'parkAddress',
+        'cargoType', 'cargoWeight', 'cargoVolume', 'cargoPieces', 'cargoNotes'
     ];
 
     formFields.forEach(fieldId => {
         const element = document.getElementById(fieldId);
         if (element) {
-            element.value = '';
+            if (element.tagName === 'SELECT') {
+                element.selectedIndex = 0;
+            } else {
+                element.value = '';
+            }
         }
     });
+}
 
+// 清空提货点和送货点容器（Navigation模块）
+function clearPickupAndDeliveryPointsInNavigation() {
     // 清空提货点容器（保留第一个，删除其他）
     const pickupContainer = document.getElementById('pickupPointsContainer');
     if (pickupContainer) {
@@ -1533,6 +1562,29 @@ function clearDispatchForm() {
                 deliveryPoints[i].remove();
             }
         }
+    }
+}
+
+// 重置路线选择模式（Navigation模块）
+function resetRouteSelectionModeInNavigation() {
+    const routeSelect = document.getElementById('route');
+    const routeSearchContainer = document.getElementById('routeSearchContainer');
+    const routeDropdown = document.getElementById('routeDropdown');
+    const toggleBtn = document.getElementById('toggleSearchBtn');
+    
+    // 切换回下拉选择模式
+    if (routeSelect && routeSearchContainer) {
+        routeSelect.style.display = 'block';
+        routeSearchContainer.style.display = 'none';
+        if (toggleBtn) {
+            toggleBtn.innerHTML = '<i class="fas fa-search"></i>';
+            toggleBtn.title = '切换到搜索模式';
+        }
+    }
+    
+    // 隐藏路线下拉框
+    if (routeDropdown) {
+        routeDropdown.style.display = 'none';
     }
 }
 
