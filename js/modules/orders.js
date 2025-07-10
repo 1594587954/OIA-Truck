@@ -482,8 +482,8 @@ class OrderManager {
                 return {
                     '车队': order.transportTeam || order.customer || '',
                     '车型': order.vehicleType || '',
-                    'Shipment': order.cw1no || '',
-                    'PO': order.po || order.id || '',
+                    'Shipment': order.po || '',
+                    'PO': order.cw1no || order.id || '',
                     '提货名称': order.pickupLocation || order.pickupFactory || '',
                     '送货名称': order.deliveryLocation || order.deliveryFactory || '',
                     '提货日期': order.pickupDateTime || '',
@@ -758,8 +758,9 @@ class OrderManager {
         const parkContactEl = document.getElementById('parkContact');
         const parkAddressEl = document.getElementById('parkAddress');
         
-        if (parkNameEl && orderData.logisticsPark) {
-            parkNameEl.value = orderData.logisticsPark;
+        // 修复字段映射问题：使用正确的字段名parkName而不是logisticsPark
+        if (parkNameEl && orderData.parkName) {
+            parkNameEl.value = orderData.parkName;
         }
         
         if (parkContactEl && orderData.parkContact) {

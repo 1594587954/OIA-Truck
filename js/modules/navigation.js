@@ -541,12 +541,23 @@ function saveRoute() {
     const waypoints = getWaypoints();
     const cargoInfo = getCargoInfo();
 
+    // 获取基本信息字段
+    const shipmentEl = document.getElementById('po');
+    const poEl = document.getElementById('cw1no');
+    const transportTeamEl = document.getElementById('transportTeam');
+    const vehicleTypeEl = document.getElementById('vehicleType');
+
     const routeData = {
         id: Date.now(),
         name: document.getElementById('routeName').value,
         waypoints: waypoints,
         cargoInfo: cargoInfo,
         notes: document.getElementById('routeNotes').value,
+        // 新增基本信息字段
+        shipment: shipmentEl ? shipmentEl.value : '',
+        po: poEl ? poEl.value : '',
+        transportTeam: transportTeamEl ? transportTeamEl.value : '',
+        vehicleType: vehicleTypeEl ? vehicleTypeEl.value : '',
         createTime: new Date().toISOString()
     };
 

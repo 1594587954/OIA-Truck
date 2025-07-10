@@ -218,6 +218,39 @@ function fillRouteInfo(routeId = null) {
                 }
             }
 
+            // 填充基本信息字段（Shipment和车队信息）
+            if (route.shipment) {
+                const shipmentEl = document.getElementById('po');
+                if (shipmentEl) {
+                    shipmentEl.value = route.shipment;
+                    console.log('填充Shipment信息:', route.shipment);
+                }
+            }
+
+            if (route.po) {
+                const poEl = document.getElementById('cw1no');
+                if (poEl) {
+                    poEl.value = route.po;
+                    console.log('填充PO信息:', route.po);
+                }
+            }
+
+            if (route.transportTeam) {
+                const transportTeamEl = document.getElementById('transportTeam');
+                if (transportTeamEl) {
+                    transportTeamEl.value = route.transportTeam;
+                    console.log('填充车队信息:', route.transportTeam);
+                }
+            }
+
+            if (route.vehicleType) {
+                const vehicleTypeEl = document.getElementById('vehicleType');
+                if (vehicleTypeEl) {
+                    vehicleTypeEl.value = route.vehicleType;
+                    console.log('填充车型信息:', route.vehicleType);
+                }
+            }
+
             console.log('路线信息填充完成');
         } else {
             console.log('未找到路线或路线没有途经点');
@@ -410,6 +443,7 @@ function createOrderDataForManagement(formData) {
         customer: formData.transportTeam,
         routeName: formData.routeName,
         route: formData.route,
+        po: formData.po,
         cw1no: formData.cw1no,
         transportTeam: formData.transportTeam,
         vehicleType: formData.vehicleType,
