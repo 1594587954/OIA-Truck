@@ -215,7 +215,7 @@ class OrderManager {
 
     // 获取订单号显示格式
     getOrderNumber(orderData) {
-        const po = orderData.cw1no || '';
+        const po = orderData.shipment || '';
         const shipment = orderData.po || '';
 
         if (po && shipment) {
@@ -678,20 +678,20 @@ class OrderManager {
     fillBasicInfo(orderData) {
         // PO和Shipment信息
         const poEl = document.getElementById('po');
-        const cw1noEl = document.getElementById('cw1no');
+        const shipmentEl = document.getElementById('shipment');
         
         if (poEl && orderData.po) poEl.value = orderData.po;
-        if (cw1noEl && orderData.cw1no) cw1noEl.value = orderData.cw1no;
+        if (shipmentEl && orderData.shipment) shipmentEl.value = orderData.shipment;
         
-        // 如果没有单独的po和cw1no，尝试从orderNumber解析
-        if (orderData.orderNumber && (!orderData.po || !orderData.cw1no)) {
+        // 如果没有单独的po和shipment，尝试从orderNumber解析
+        if (orderData.orderNumber && (!orderData.po || !orderData.shipment)) {
             const parts = orderData.orderNumber.split('/');
             if (parts.length === 2) {
-                if (cw1noEl) cw1noEl.value = parts[0];
+                if (shipmentEl) shipmentEl.value = parts[0];
                 if (poEl) poEl.value = parts[1];
             } else {
-                // 如果只有一个值，优先填入cw1no
-                if (cw1noEl) cw1noEl.value = orderData.orderNumber;
+                // 如果只有一个值，优先填入shipment
+                if (shipmentEl) shipmentEl.value = orderData.orderNumber;
             }
         }
     }

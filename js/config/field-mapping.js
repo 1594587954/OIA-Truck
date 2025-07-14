@@ -5,7 +5,7 @@ class FieldMapping {
         this.basicFields = {
             // PO和Shipment
             po: 'po',                    // PO号
-            cw1no: 'cw1no',             // Shipment号
+            shipment: 'shipment',             // Shipment号
             
             // 运输团队信息
             transportTeam: 'transportTeam',   // 运输团队
@@ -42,7 +42,7 @@ class FieldMapping {
         // 订单管理表格字段到表单字段的映射
         this.orderToFormMapping = {
             // 基本信息映射
-            'orderId': 'cw1no',                   // 订单ID映射到Shipment
+            'orderId': 'shipment',                   // 订单ID映射到Shipment
             'orderNumber': 'po',                  // 订单号映射到PO
             'route': 'route',                     // 路线
             'transportTeam': 'transportTeam',     // 运输团队
@@ -76,7 +76,7 @@ class FieldMapping {
         // 表单验证规则
         this.validationRules = {
             required: ['transportTeam', 'vehicleType'],  // 必填字段
-            optional: ['po', 'cw1no'],                   // 可选字段（但至少填一个）
+            optional: ['po', 'shipment'],                   // 可选字段（但至少填一个）
             dateFields: ['pickupDate', 'deliveryDate'],  // 日期字段
             timeFields: ['pickupTime', 'deliveryTime']   // 时间字段
         };

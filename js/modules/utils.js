@@ -345,8 +345,8 @@ const ValidationUtils = {
     },
 
     // 验证PO或Shipment信息（任意填写一个即可）
-    validatePOOrShipment(po, cw1no) {
-        if (!po && !cw1no) {
+    validatePOOrShipment(po, shipment) {
+        if (!po && !shipment) {
             UIUtils.showError('请至少填写PO或Shipment中的一项');
             return false;
         }

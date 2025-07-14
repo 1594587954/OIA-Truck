@@ -1,6 +1,8 @@
 // 导航相关功能模块
 // 导航状态管理
 let currentSection = 'dashboard';
+// 当前编辑的路线ID（用于区分新增和编辑模式）
+let currentEditingRouteId = null;
 
 // 获取当前显示的页面ID
 function getCurrentSection() {
@@ -543,12 +545,12 @@ function saveRoute() {
 
     // 获取基本信息字段
     const shipmentEl = document.getElementById('po');
-    const poEl = document.getElementById('cw1no');
+    const poEl = document.getElementById('shipment');
     const transportTeamEl = document.getElementById('transportTeam');
     const vehicleTypeEl = document.getElementById('vehicleType');
 
     const routeData = {
-        id: Date.now(),
+        id: currentEditingRouteId || Date.now(), // 如果是编辑模式使用原ID，否则生成新ID
         name: document.getElementById('routeName').value,
         waypoints: waypoints,
         cargoInfo: cargoInfo,
@@ -574,7 +576,25 @@ function saveRoute() {
 
     // 保存到本地存储
     let routes = Utils.StorageUtils.getRoutes();
-    routes.unshift(routeData); // 使用unshift将新路线添加到数组开头
+    
+    if (currentEditingRouteId) {
+        // 编辑模式：更新现有路线
+        const routeIndex = routes.findIndex(r => r.id == currentEditingRouteId);
+        if (routeIndex !== -1) {
+            // 保留原始创建时间
+            const originalRoute = routes[routeIndex];
+            routeData.createTime = originalRoute.createTime;
+            routeData.updateTime = new Date().toISOString();
+            routes[routeIndex] = routeData;
+        } else {
+            // 如果找不到原路线，作为新路线添加
+            routes.unshift(routeData);
+        }
+    } else {
+        // 新增模式：添加新路线到数组开头
+        routes.unshift(routeData);
+    }
+    
     Utils.StorageUtils.setRoutes(routes);
 
     // 更新派车单页面的路线选择框
@@ -582,7 +602,13 @@ function saveRoute() {
         updateRouteSelect();
     }
 
-    alert('路线保存成功！');
+    // 根据模式显示不同的成功信息
+    if (currentEditingRouteId) {
+        alert('路线更新成功！');
+    } else {
+        alert('路线保存成功！');
+    }
+    
     clearRouteForm();
 }
 
@@ -676,6 +702,9 @@ function clearRouteForm() {
     // 清空所有途经点
     const container = document.getElementById('waypointsContainer');
     container.innerHTML = '';
+    
+    // 重置编辑状态
+    currentEditingRouteId = null;
 }
 
 // 页面内容区域的类名
@@ -1441,7 +1470,18 @@ function createOverviewOrderRow(orderData) {
 
 // 获取订单编号
 function getOrderNumber(orderData) {
-    return orderData.orderNumber || orderData.id.substring(0, 8);
+    const shipment = orderData.shipment || '';
+    const po = orderData.po || '';
+
+    if (shipment && po) {
+        return `${shipment}/${po}`;
+    } else if (shipment) {
+        return shipment;
+    } else if (po) {
+        return po;
+    } else {
+        return orderData.orderNumber || orderData.id.substring(0, 8);
+    }
 }
 
 // 隐藏订单列表
@@ -1520,7 +1560,7 @@ function clearDispatchForm() {
 // 手动清空表单字段（Navigation模块降级处理）
 function clearFormFieldsManuallyInNavigation() {
     const formFields = [
-        'cw1no', 'po', 'transportTeam', 'route', 'routeSearch', 'selectedRouteId', 'vehicleType',
+        'shipment', 'po', 'transportTeam', 'route', 'routeSearch', 'selectedRouteId', 'vehicleType',
         'pickupFactory', 'pickupContact', 'pickupAddress', 'pickupDate', 'pickupTime',
         'deliveryFactory', 'deliveryContact', 'deliveryAddress', 'deliveryDate', 'deliveryTime',
         'parkName', 'parkContact', 'parkAddress',
@@ -1608,6 +1648,9 @@ function loadRouteForEdit(routeId) {
         alert('路线不存在！');
         return;
     }
+
+    // 设置当前编辑的路线ID
+    currentEditingRouteId = routeId;
 
     // 填充基本信息
     document.getElementById('routeName').value = route.name || '';

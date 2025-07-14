@@ -228,7 +228,7 @@ function fillRouteInfo(routeId = null) {
             }
 
             if (route.po) {
-                const poEl = document.getElementById('cw1no');
+                const poEl = document.getElementById('shipment');
                 if (poEl) {
                     poEl.value = route.po;
                     console.log('填充PO信息:', route.po);
@@ -292,7 +292,7 @@ function clearDispatchForm() {
 // 手动清空表单字段（降级处理）
 function clearFormFieldsManually() {
     const fieldIds = [
-        'cw1no', 'po', 'route', 'routeSearch', 'selectedRouteId',
+        'shipment', 'po', 'route', 'routeSearch', 'selectedRouteId',
         'transportTeam', 'vehicleType',
         'pickupFactory', 'pickupContact', 'pickupAddress', 'pickupDate',
         'deliveryFactory', 'deliveryContact', 'deliveryAddress', 'deliveryDate',
@@ -397,7 +397,7 @@ function getDispatchFormData() {
     return {
         route: routeId,
         routeName: routeName,
-        cw1no: document.getElementById('cw1no').value,
+        shipment: document.getElementById('shipment').value,
         po: document.getElementById('po').value,
         transportTeam: transportTeamElement.options[transportTeamElement.selectedIndex]?.text || '未选择车队',
         vehicleType: document.getElementById('vehicleType').value || '未选择',
@@ -444,7 +444,7 @@ function createOrderDataForManagement(formData) {
         routeName: formData.routeName,
         route: formData.route,
         po: formData.po,
-        cw1no: formData.cw1no,
+        shipment: formData.shipment,
         transportTeam: formData.transportTeam,
         vehicleType: formData.vehicleType,
 
@@ -493,7 +493,7 @@ async function generateDispatchSheet() {
     console.log('表单数据:', formData);
 
     // 验证必填字段（PO或Shipment任意填写一项即可）
-    if (!Utils.ValidationUtils.validatePOOrShipment(formData.po, formData.cw1no)) {
+    if (!Utils.ValidationUtils.validatePOOrShipment(formData.po, formData.shipment)) {
         return;
     }
 
@@ -645,7 +645,7 @@ async function generateDispatchSheet() {
                 <p style="margin: 3px 0;"><strong>车型:</strong> ${formData.vehicleType || '未选择'}</p>
             </div>
             <div style="width: 48%;">
-                <p style="margin: 3px 0;"><strong>PO:</strong> ${formData.cw1no || '无'}</p>
+                <p style="margin: 3px 0;"><strong>PO:</strong> ${formData.shipment || '无'}</p>
                 <p style="margin: 3px 0;"><strong>Shipment:</strong> ${formData.po}</p>
             </div>
         </div>
@@ -846,7 +846,7 @@ async function generatePDFFromContainer(container, formData) {
             clearDispatchForm();
         }
 
-        const viewOrders = Utils.UIUtils.confirm(`派车单已成功保存并生成PDF！\nPO: ${formData.cw1no}\nShipment: ${formData.po}\nPDF文件: ${result.fileName}\n\n是否立即查看订单管理？`);
+        const viewOrders = Utils.UIUtils.confirm(`派车单已成功保存并生成PDF！\nPO: ${formData.shipment}\nShipment: ${formData.po}\nPDF文件: ${result.fileName}\n\n是否立即查看订单管理？`);
 
         if (viewOrders && typeof showOrderManagement === 'function') {
             showOrderManagement();

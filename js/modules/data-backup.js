@@ -222,6 +222,26 @@ class DataBackupManager {
                 window.dashboardManager.updateStats();
             }
 
+            // 刷新订单管理页面
+            if (window.orderManager && typeof window.orderManager.loadOrdersTable === 'function') {
+                window.orderManager.loadOrdersTable();
+            }
+
+            // 刷新客户管理页面
+            if (typeof loadCustomerData === 'function') {
+                loadCustomerData();
+            }
+
+            // 刷新总览页面数据
+            if (typeof loadOverviewData === 'function') {
+                loadOverviewData();
+            }
+
+            // 刷新路线管理页面（如果在路线管理页面）
+            if (typeof loadRoutes === 'function' && window.location.pathname.includes('route-management')) {
+                loadRoutes();
+            }
+
             // 触发页面重新加载数据的事件
             window.dispatchEvent(new CustomEvent('dataImported', {
                 detail: { timestamp: new Date().toISOString() }
@@ -311,6 +331,50 @@ window.exportAllData = function() {
 window.importAllData = function() {
     window.dataBackupManager.importAllData();
 };
+
+// 添加全局dataImported事件监听器，确保导入后页面状态正确更新
+window.addEventListener('dataImported', function(event) {
+    console.log('检测到数据导入事件，刷新页面状态...', event.detail);
+    
+    // 延迟执行以确保数据已完全加载
+    setTimeout(() => {
+        try {
+            // 更新按钮状态
+            if (typeof updateButtonStates === 'function') {
+                updateButtonStates();
+            }
+            
+            // 刷新当前显示的内容
+            const currentSection = typeof getCurrentSection === 'function' ? getCurrentSection() : null;
+            if (currentSection) {
+                console.log('当前页面:', currentSection);
+                
+                // 根据当前页面刷新对应数据
+                switch (currentSection) {
+                    case 'order-management':
+                        if (window.orderManager && typeof window.orderManager.loadOrdersTable === 'function') {
+                            window.orderManager.loadOrdersTable();
+                        }
+                        break;
+                    case 'customer-management':
+                        if (typeof loadCustomerData === 'function') {
+                            loadCustomerData();
+                        }
+                        break;
+                    case 'overview-dashboard':
+                        if (typeof loadOverviewData === 'function') {
+                            loadOverviewData();
+                        }
+                        break;
+                }
+            }
+            
+            console.log('页面状态刷新完成');
+        } catch (error) {
+            console.error('刷新页面状态时出错:', error);
+        }
+    }, 100);
+});
 
 // 模块导出
 if (typeof module !== 'undefined' && module.exports) {
