@@ -216,7 +216,11 @@ function fillPickupInfo(customer) {
     const pickupAddress = document.getElementById('pickupAddress');
 
     if (pickupFactory) pickupFactory.value = customer.name || '';
-    if (pickupContact) pickupContact.value = customer.contact || '';
+    // 联系人和电话合并显示
+    const contact = customer.contact || '';
+    const phone = customer.phone || '';
+    const contactInfo = contact && phone ? `${contact} (${phone})` : contact || phone || '';
+    if (pickupContact) pickupContact.value = contactInfo;
     if (pickupAddress) pickupAddress.value = customer.address || '';
 }
 
@@ -228,7 +232,11 @@ function fillLogisticsInfo(customer) {
     const parkAddress = document.getElementById('parkAddress');
 
     if (parkName) parkName.value = customer.name || '';
-    if (parkContact) parkContact.value = customer.contact || '';
+    // 联系人和电话合并显示
+    const contact = customer.contact || '';
+    const phone = customer.phone || '';
+    const contactInfo = contact && phone ? `${contact} (${phone})` : contact || phone || '';
+    if (parkContact) parkContact.value = contactInfo;
     if (parkAddress) parkAddress.value = customer.address || '';
 }
 
@@ -239,7 +247,11 @@ function fillDeliveryInfo(customer) {
     const deliveryAddress = document.getElementById('deliveryAddress');
 
     if (deliveryFactory) deliveryFactory.value = customer.name || '';
-    if (deliveryContact) deliveryContact.value = customer.contact || '';
+    // 联系人和电话合并显示
+    const contact = customer.contact || '';
+    const phone = customer.phone || '';
+    const contactInfo = contact && phone ? `${contact} (${phone})` : contact || phone || '';
+    if (deliveryContact) deliveryContact.value = contactInfo;
     if (deliveryAddress) deliveryAddress.value = customer.address || '';
 }
 
