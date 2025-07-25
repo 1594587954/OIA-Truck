@@ -65,7 +65,24 @@ class DataManager {
 
     // 订单相关操作
     getOrders() {
-        const orders = this.get(this.storageKeys.DISPATCH_ORDERS, []);
+        // 尝试从 dispatchOrders 键获取数据
+        let orders = this.get(this.storageKeys.DISPATCH_ORDERS, null);
+        
+        // 如果 dispatchOrders 不存在或不是数组，尝试从 orders 键获取数据（向后兼容）
+        if (!orders || !Array.isArray(orders)) {
+            orders = this.get('orders', []);
+            
+            // 如果从 orders 键获取到了数据，将其同步到 dispatchOrders 键
+            if (Array.isArray(orders) && orders.length > 0) {
+                console.log('从 orders 键同步数据到 dispatchOrders 键');
+                this.set(this.storageKeys.DISPATCH_ORDERS, orders);
+            } else {
+                // 如果两个键都没有有效数据，初始化为空数组
+                orders = [];
+                this.set(this.storageKeys.DISPATCH_ORDERS, orders);
+            }
+        }
+        
         return Array.isArray(orders) ? orders : [];
     }
 
@@ -274,7 +291,14 @@ class DataManager {
         }
 
         // 初始化其他默认数据
-        if (!this.get(this.storageKeys.DISPATCH_ORDERS)) {
+        // 检查 dispatchOrders 和 orders 键是否存在
+        const dispatchOrders = this.get(this.storageKeys.DISPATCH_ORDERS, null);
+        const orders = this.get('orders', null);
+        
+        // 如果两个键都不存在，创建示例订单数据
+        if ((!dispatchOrders || !Array.isArray(dispatchOrders) || dispatchOrders.length === 0) && 
+            (!orders || !Array.isArray(orders) || orders.length === 0)) {
+            console.log('初始化示例订单数据...');
             // 创建示例订单数据
             const sampleOrders = [
                 {

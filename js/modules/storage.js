@@ -171,5 +171,28 @@ function updateRouteSelect() {
 }
 
 async function saveOrderToLocalStorage(orderData) {
-    await storageManager.saveOrderToLocalStorage(orderData);
+    try {
+        console.log('保存订单到本地存储:', orderData);
+        
+        // 确保 dispatchOrders 存在并且是数组
+        if (!localStorage.getItem('dispatchOrders')) {
+            localStorage.setItem('dispatchOrders', JSON.stringify([]));
+        }
+        
+        await storageManager.saveOrderToLocalStorage(orderData);
+        console.log('订单已保存到本地存储');
+        
+        // 更新订单管理表格
+        updateOrderTable();
+        
+        // 更新仪表盘统计
+        if (window.dashboardManager) {
+            await window.dashboardManager.updateDashboardStats();
+        }
+        
+        return true;
+    } catch (error) {
+        console.error('保存订单到本地存储失败:', error);
+        return false;
+    }
 }

@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>测试订单数据</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .button:hover {
+            background: #0056b3;
+        }
+        pre {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+        .section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .success {
+            color: green;
+            font-weight: bold;
+        }
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>订单数据测试工具</h1>
+        
+        <div class="section">
+            <h2>存储键检查</h2>
+            <button class="button" onclick="checkStorageKeys()">检查所有存储键</button>
+            <pre id="storageKeysData">点击"检查所有存储键"查看数据</pre>
+        </div>
+        
+        <div class="section">
+            <h2>订单数据</h2>
+            <button class="button" onclick="showOrders()">显示 orders 键数据</button>
+            <button class="button" onclick="showDispatchOrders()">显示 dispatchOrders 键数据</button>
+            <pre id="ordersData">点击按钮查看数据</pre>
+        </div>
+        
+        <div class="section">
+            <h2>数据修复</h2>
+            <button class="button" onclick="fixOrdersData()">修复订单数据</button>
+            <button class="button" onclick="createTestOrder()">创建测试订单</button>
+            <pre id="fixResult">点击"修复订单数据"执行修复</pre>
+        </div>
+        
+        <div class="section">
+            <h2>应用测试</h2>
+            <button class="button" onclick="openMainApp()">打开主应用</button>
+            <button class="button" onclick="openFixStorage()">打开修复工具</button>
+        </div>
+    </div>
+
+    <script>
+        function checkStorageKeys() {
+            const keys = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                const value = localStorage.getItem(key);
+                let size = 0;
+                try {
+                    size = value ? value.length : 0;
+                } catch (e) {}
+                
+                keys.push({
+                    key: key,
+                    size: size + ' 字符',
+                    isArray: isJsonArray(value)
+                });
+            }
+            document.getElementById('storageKeysData').textContent = JSON.stringify(keys, null, 2);
+        }
+        
+        function isJsonArray(str) {
+            if (!str) return false;
+            try {
+                const parsed = JSON.parse(str);
+                return Array.isArray(parsed);
+            } catch (e) {
+                return false;
+            }
+        }
+        
+        function showOrders() {
+            const orders = JSON.parse(localStorage.getItem('orders') || '[]');
+            document.getElementById('ordersData').textContent = 
+                `orders 键数据 (${orders.length} 条记录):\n` + 
+                JSON.stringify(orders, null, 2);
+        }
+        
+        function showDispatchOrders() {
+            const orders = JSON.parse(localStorage.getItem('dispatchOrders') || '[]');
+            document.getElementById('ordersData').textContent = 
+                `dispatchOrders 键数据 (${orders.length} 条记录):\n` + 
+                JSON.stringify(orders, null, 2);
+        }
+        
+        function fixOrdersData() {
+            try {
+                const result = { actions: [] };
+                
+                // 检查 dispatchOrders 键
+                let dispatchOrders = localStorage.getItem('dispatchOrders');
+                if (!dispatchOrders) {
+                    // 如果不存在，创建一个空数组
+                    localStorage.setItem('dispatchOrders', JSON.stringify([]));
+                    result.actions.push('创建了空的 dispatchOrders 数组');
+                } else {
+                    try {
+                        // 尝试解析现有数据
+                        const parsedOrders = JSON.parse(dispatchOrders);
+                        if (!Array.isArray(parsedOrders)) {
+                            // 如果不是数组，重置为空数组
+                            localStorage.setItem('dispatchOrders', JSON.stringify([]));
+                            result.actions.push('将非数组的 dispatchOrders 重置为空数组');
+                        } else {
+                            result.actions.push(`dispatchOrders 数据正常，包含 ${parsedOrders.length} 条记录`);
+                        }
+                    } catch (parseError) {
+                        // 如果解析失败，重置为空数组
+                        localStorage.setItem('dispatchOrders', JSON.stringify([]));
+                        result.actions.push('将无效的 dispatchOrders 重置为空数组');
+                    }
+                }
+                
+                // 检查 orders 键
+                let orders = localStorage.getItem('orders');
+                if (orders) {
+                    try {
+                        // 尝试解析现有数据
+                        const parsedOrders = JSON.parse(orders);
+                        if (Array.isArray(parsedOrders) && parsedOrders.length > 0) {
+                            // 如果是有效的数组且有数据，同步到 dispatchOrders
+                            let currentDispatchOrders = JSON.parse(localStorage.getItem('dispatchOrders') || '[]');
+                            
+                            // 合并数据，避免重复
+                            const mergedOrders = [...currentDispatchOrders];
+                            let addedCount = 0;
+                            
+                            parsedOrders.forEach(order => {
+                                if (!mergedOrders.some(o => o.id === order.id)) {
+                                    mergedOrders.push(order);
+                                    addedCount++;
+                                }
+                            });
+                            
+                            if (addedCount > 0) {
+                                localStorage.setItem('dispatchOrders', JSON.stringify(mergedOrders));
+                                result.actions.push(`从 orders 键同步了 ${addedCount} 条记录到 dispatchOrders`);
+                            } else {
+                                result.actions.push('orders 键中的数据已全部存在于 dispatchOrders 中，无需同步');
+                            }
+                        } else {
+                            result.actions.push('orders 键不包含有效数据，无需同步');
+                        }
+                    } catch (parseError) {
+                        result.actions.push('orders 键包含无效数据，无法解析');
+                    }
+                } else {
+                    result.actions.push('orders 键不存在，无需同步');
+                }
+                
+                document.getElementById('fixResult').innerHTML = 
+                    '<span class="success">修复完成</span><br>' + 
+                    result.actions.map(action => `- ${action}`).join('<br>');
+                    
+                // 更新显示
+                checkStorageKeys();
+            } catch (error) {
+                document.getElementById('fixResult').innerHTML = 
+                    `<span class="error">修复失败: ${error.message}</span>`;
+            }
+        }
+        
+        function createTestOrder() {
+            const testOrder = {
+                id: 'TEST_' + Date.now(),
+                customer: '测试客户',
+                routeName: '测试路线',
+                route: 'test-route',
+                po: 'TEST_PO_' + Date.now(),
+                shipment: 'TEST_SHIPMENT_' + Date.now(),
+                transportTeam: '测试车队',
+                vehicleType: '测试车型',
+                pickupLocation: '测试提货地点',
+                pickupContact: '测试提货联系人',
+                pickupAddress: '测试提货地址',
+                pickupDateTime: new Date().toISOString().split('T')[0],
+                deliveryLocation: '测试送货地点',
+                deliveryContact: '测试送货联系人',
+                deliveryAddress: '测试送货地址',
+                deliveryDateTime: new Date().toISOString().split('T')[0],
+                cargoType: '测试货物',
+                cargoWeight: '100',
+                cargoVolume: '10',
+                cargoPieces: '5',
+                cargoNotes: '测试备注',
+                vehicle: '待安排',
+                createTime: new Date().toISOString(),
+                updateTime: new Date().toISOString()
+            };
+            
+            try {
+                let orders = JSON.parse(localStorage.getItem('dispatchOrders') || '[]');
+                if (!Array.isArray(orders)) {
+                    orders = [];
+                }
+                orders.unshift(testOrder);
+                localStorage.setItem('dispatchOrders', JSON.stringify(orders));
+                
+                document.getElementById('fixResult').innerHTML = 
+                    '<span class="success">测试订单已创建并添加到 dispatchOrders!</span>';
+                
+                // 显示更新后的数据
+                setTimeout(() => {
+                    checkStorageKeys();
+                    showDispatchOrders();
+                }, 500);
+            } catch (error) {
+                document.getElementById('fixResult').innerHTML = 
+                    `<span class="error">创建测试订单失败: ${error.message}</span>`;
+            }
+        }
+        
+        function openMainApp() {
+            window.open('index.html', '_blank');
+        }
+        
+        function openFixStorage() {
+            window.open('fix-storage.html', '_blank');
+        }
+        
+        // 页面加载时检查存储键
+        window.onload = function() {
+            checkStorageKeys();
+        };
+    </script>
+</body>
+</html>
