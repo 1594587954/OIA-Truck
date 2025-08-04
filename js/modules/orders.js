@@ -617,12 +617,20 @@ class OrderManager {
                 const cells = row.querySelectorAll('td');
                 orderData = {
                     id: orderId,
-                    customer: cells[2].textContent,
+                    routeName: cells[2].textContent,
                     pickupLocation: cells[3].textContent,
                     deliveryLocation: cells[4].textContent,
                     pickupDateTime: cells[5].textContent === '未设置' ? '' : cells[5].textContent,
                     deliveryDateTime: cells[6].textContent === '未设置' ? '' : cells[6].textContent
                 };
+                
+                // 尝试从localStorage获取完整的订单数据
+                const allOrders = JSON.parse(localStorage.getItem('dispatchOrders') || '[]');
+                const fullOrderData = allOrders.find(order => order.id === orderId);
+                if (fullOrderData) {
+                    // 合并完整数据
+                    orderData = {...fullOrderData, ...orderData};
+                }
             }
 
             console.log('提取的订单数据:', orderData);
@@ -780,25 +788,36 @@ class OrderManager {
         const cargoPiecesEl = document.getElementById('cargoPieces');
         const cargoNotesEl = document.getElementById('cargoNotes');
         
-        if (cargoTypeEl && orderData.cargoInfo) {
-            cargoTypeEl.value = orderData.cargoInfo;
+        if (cargoTypeEl) {
+            // 优先使用cargoType字段，如果不存在则尝试使用cargoInfo或items中的name
+            cargoTypeEl.value = orderData.cargoType || orderData.cargoInfo || (orderData.items && orderData.items[0] ? orderData.items[0].name : '') || '';
         }
         
-        if (cargoWeightEl && orderData.cargoWeight) {
-            cargoWeightEl.value = orderData.cargoWeight;
+        if (cargoWeightEl) {
+            // 优先使用cargoWeight字段，如果不存在则尝试使用weight
+            cargoWeightEl.value = orderData.cargoWeight || orderData.weight || '';
         }
         
-        if (cargoVolumeEl && orderData.cargoVolume) {
-            cargoVolumeEl.value = orderData.cargoVolume;
+        if (cargoVolumeEl) {
+            // 优先使用cargoVolume字段，如果不存在则尝试使用volume
+            cargoVolumeEl.value = orderData.cargoVolume || orderData.volume || '';
         }
         
-        if (cargoPiecesEl && orderData.cargoPieces) {
-            cargoPiecesEl.value = orderData.cargoPieces;
+        if (cargoPiecesEl) {
+            // 优先使用cargoPieces字段，如果不存在则尝试使用quantity
+            cargoPiecesEl.value = orderData.cargoPieces || orderData.quantity || '';
         }
         
-        if (cargoNotesEl && orderData.cargoNotes) {
-            cargoNotesEl.value = orderData.cargoNotes;
+        if (cargoNotesEl) {
+            cargoNotesEl.value = orderData.cargoNotes || orderData.notes || '';
         }
+        
+        console.log('填充货物信息完成:', {
+            cargoType: cargoTypeEl ? cargoTypeEl.value : 'element not found',
+            cargoWeight: cargoWeightEl ? cargoWeightEl.value : 'element not found',
+            cargoVolume: cargoVolumeEl ? cargoVolumeEl.value : 'element not found',
+            cargoPieces: cargoPiecesEl ? cargoPiecesEl.value : 'element not found'
+        });
     }
     
     // 填充运输团队信息
@@ -807,17 +826,44 @@ class OrderManager {
         const vehicleTypeEl = document.getElementById('vehicleType');
         const routeEl = document.getElementById('route');
         
-        if (transportTeamEl && orderData.transportTeam) {
-            transportTeamEl.value = orderData.transportTeam;
+        if (transportTeamEl) {
+            // 优先使用transportTeam字段，如果不存在则尝试使用customer
+            const teamValue = orderData.transportTeam || orderData.customer || '';
+            
+            // 检查下拉列表中是否有匹配的选项
+            let optionFound = false;
+            for (let i = 0; i < transportTeamEl.options.length; i++) {
+                if (transportTeamEl.options[i].text === teamValue || transportTeamEl.options[i].value === teamValue) {
+                    transportTeamEl.selectedIndex = i;
+                    optionFound = true;
+                    break;
+                }
+            }
+            
+            // 如果没有找到匹配的选项，但有值，则添加一个新选项
+            if (!optionFound && teamValue) {
+                const newOption = document.createElement('option');
+                newOption.text = teamValue;
+                newOption.value = teamValue;
+                transportTeamEl.add(newOption);
+                newOption.selected = true;
+            }
         }
         
-        if (vehicleTypeEl && orderData.vehicleType) {
-            vehicleTypeEl.value = orderData.vehicleType;
+        if (vehicleTypeEl) {
+            vehicleTypeEl.value = orderData.vehicleType || '';
         }
         
-        if (routeEl && orderData.route) {
-            routeEl.value = orderData.route;
+        if (routeEl) {
+            // 优先使用route字段，如果不存在则尝试使用routeName
+            routeEl.value = orderData.route || orderData.routeName || '';
         }
+        
+        console.log('填充运输团队信息完成:', {
+            transportTeam: transportTeamEl ? transportTeamEl.value : 'element not found',
+            vehicleType: vehicleTypeEl ? vehicleTypeEl.value : 'element not found',
+            route: routeEl ? routeEl.value : 'element not found'
+        });
     }
     
     // 保留原有的fillEditForm方法以保持兼容性
@@ -905,6 +951,7 @@ class OrderManager {
                 vehicleType: orderData.vehicleType || '未选择',
                 cw1no: orderData.cw1no || orderData.orderNumber || '',
                 po: orderData.po || orderData.id || '',
+                shipment: orderData.shipment || orderData.orderNumber || '',
 
                 // 提货信息（单点，用于兼容）
                 pickupFactory: orderData.pickupFactory || orderData.pickupLocation || '未填写',

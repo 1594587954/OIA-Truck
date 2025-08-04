@@ -846,7 +846,12 @@ async function generatePDFFromContainer(container, formData) {
             clearDispatchForm();
         }
 
-        const viewOrders = Utils.UIUtils.confirm(`派车单已成功保存并生成PDF！\nPO: ${formData.shipment}\nShipment: ${formData.po}\nPDF文件: ${result.fileName}\n\n是否立即查看订单管理？`);
+        const viewOrders = Utils.UIUtils.confirm(`派车单已成功保存并生成PDF！
+PO: ${formData.cw1no || formData.shipment || 'Unknown'}
+Shipment: ${formData.po || 'Unknown'}
+PDF文件: ${result.fileName}
+
+是否立即查看订单管理？`);
 
         if (viewOrders && typeof showOrderManagement === 'function') {
             showOrderManagement();
@@ -1040,7 +1045,12 @@ async function generatePDFFromContainer(container, formData) {
             clearDispatchForm();
         }
 
-        const viewOrders = Utils.UIUtils.confirm(`派车单已成功保存并生成PDF！\nPO: ${formData.cw1no}\nShipment: ${formData.po}\nPDF文件: ${result.fileName}\n\n是否立即查看订单管理？`);
+        const viewOrders = Utils.UIUtils.confirm(`派车单已成功保存并生成PDF！
+PO: ${formData.cw1no || formData.shipment || 'Unknown'}
+Shipment: ${formData.po || 'Unknown'}
+PDF文件: ${result.fileName}
+
+是否立即查看订单管理？`);
 
         if (viewOrders && typeof showOrderManagement === 'function') {
             showOrderManagement();

@@ -310,11 +310,12 @@ const PDFUtils = {
                 pdf.addImage(imgData, 'JPEG', x, y, scaledWidth, scaledHeight);
             }
 
-            // 生成文件名：派车单-Shipment或PO-提货日期
+            // 生成文件名：派车单-Shipment/PO-提货日期
         const reprintPrefix = isReprint ? '重打-' : '';
-        const identifier = formData.po || formData.cw1no || 'Unknown';
+        const shipment = formData.po || 'Unknown';
+        const po = formData.cw1no || formData.shipment || 'Unknown';
         const pickupDate = formData.pickupDate || Utils.DateUtils.getCurrentDate();
-        const fileName = `${reprintPrefix}派车单-${identifier}-${pickupDate}.pdf`;
+        const fileName = `${reprintPrefix}派车单-${shipment}/${po}-${pickupDate}.pdf`;
 
             // 下载PDF
             pdf.save(fileName);
