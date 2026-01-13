@@ -1,0 +1,135 @@
+/* PDF模板样式 */
+#pdf-template {
+    position: absolute;
+    left: -9999px;
+    width: 210mm; /* A4纸宽度 */
+    min-height: 297mm; /* A4纸高度 */
+    max-width: 210mm;
+    background: #fff;
+    padding: 3mm; /* 减少页边距，从10mm改为3mm */
+    font-family: 'Microsoft YaHei', 'Noto Sans SC', Arial, sans-serif;
+    font-size: 14px; /* 放大字体，从12px改为14px */
+    line-height: 1.5; /* 增加行高提高可读性 */
+    box-sizing: border-box;
+    overflow: hidden; /* 防止内容溢出 */
+}
+
+#pdf-template table {
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+#pdf-template .logo-cell {
+    width: 30%;
+}
+
+#pdf-template .title-cell {
+    text-align: center;
+}
+
+#pdf-template .info-cell {
+    width: 30%;
+    text-align: right;
+}
+
+#pdf-template h1 {
+    font-size: 28px; /* 放大主标题，从24px改为28px */
+    margin: 0;
+    color: #1a3a6c;
+}
+
+#pdf-template .company-name {
+    margin: 5px 0;
+    font-size: 18px; /* 放大公司名称，从16px改为18px */
+}
+
+#pdf-template .company-en-name {
+    margin: 5px 0;
+    font-size: 16px; /* 放大英文公司名，从14px改为16px */
+    color: #555;
+}
+
+#pdf-template .date-info {
+    margin: 5px 0;
+    font-size: 16px; /* 放大日期信息，从14px改为16px */
+}
+
+#pdf-template .document-container {
+    border: 1px solid #ddd;
+    padding: 25px; /* 增加内边距，从20px改为25px */
+    margin-bottom: 30px; /* 增加底部间距，从25px改为30px */
+    border-radius: 5px;
+}
+
+#pdf-template .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 25px; /* 增加底部间距，从20px改为25px */
+}
+
+#pdf-template .label-cell {
+    padding: 12px 15px; /* 增加内边距，从8px 12px改为12px 15px */
+    background: #f5f5f5;
+    border: 1px solid #ddd;
+    width: 15%;
+    font-weight: bold;
+    font-size: 15px; /* 增加标签字体大小 */
+}
+
+#pdf-template .value-cell {
+    padding: 12px 15px; /* 增加内边距，从8px 12px改为12px 15px */
+    border: 1px solid #ddd;
+    width: 35%;
+    font-size: 15px; /* 增加值字体大小 */
+}
+
+#pdf-template .section-title {
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+}
+
+#pdf-template .full-width-cell {
+    padding: 12px 15px; /* 增加内边距，从8px 12px改为12px 15px */
+    border: 1px solid #ddd;
+    font-size: 15px; /* 增加字体大小 */
+}
+
+#pdf-template .notes-container {
+    padding: 20px; /* 增加内边距，从15px改为20px */
+    background: #f9f9f9;
+    border: 1px solid #eee;
+    border-radius: 4px;
+    margin-top: 20px; /* 增加顶部间距，从15px改为20px */
+    font-size: 15px; /* 增加字体大小 */
+}
+
+#pdf-template .signature-container {
+    margin-top: 35px; /* 增加顶部间距，从30px改为35px */
+}
+
+#pdf-template .signature-table {
+    width: 100%;
+}
+
+#pdf-template .signature-cell {
+    width: 50%;
+    text-align: center;
+    font-size: 16px; /* 增加签名区字体大小 */
+}
+
+#pdf-template .signature-line {
+    margin: 35px 0 8px; /* 增加间距，从30px 0 5px改为35px 0 8px */
+    border-top: 1px solid #000;
+    display: inline-block;
+    padding-top: 8px; /* 增加顶部内边距，从5px改为8px */
+    width: 120px; /* 增加签名线宽度 */
+}
+
+#pdf-template img#pdf-logo {
+    height: 90px; /* 放大logo，从80px改为90px */
+}
+
+#pdf-template .note-text {
+    color: #999;
+}
