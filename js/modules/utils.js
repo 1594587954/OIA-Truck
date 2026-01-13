@@ -250,8 +250,194 @@ const PDFUtils = {
         `;
     },
 
-    // 通用PDF生成函数
+    // 生成PDF
     async generatePDF(container, formData, isReprint = false) {
+        // 检查库是否加载
+        if (!this.checkLibraries()) {
+            return { success: false, error: 'PDF libraries not loaded' };
+        }
+
+        try {
+            // 生成文件名
+            // 格式：[派车单-Shipment-PO-提货日期-路线名称]
+            const shipment = (formData.shipment || 'Unknown').replace(/[\\/:*?"<>|]/g, '_');
+            const po = (formData.cw1no || formData.po || 'Unknown').replace(/[\\/:*?"<>|]/g, '_');
+            const pickupDate = (formData.pickupDate || this.DateUtils?.getCurrentDate() || new Date().toISOString().split('T')[0]).replace(/[\\/:*?"<>|]/g, '_');
+            const routeName = (formData.routeName || '未选择路线').replace(/[\\/:*?"<>|]/g, '_');
+            
+            const fileName = `派车单-${shipment}-${po}-${pickupDate}-${routeName}.pdf`;
+
+            // 使用 html2canvas + jsPDF 直接生成文件
+            const PDF = this.getPDFInstance();
+            
+            // 临时添加到body以确保渲染
+            const tempContainer = container.cloneNode(true);
+            tempContainer.style.position = 'fixed';
+            tempContainer.style.left = '-9999px';
+            tempContainer.style.top = '0';
+            tempContainer.style.width = '210mm'; // A4 width
+            tempContainer.style.backgroundColor = '#ffffff';
+            tempContainer.style.zIndex = '-1';
+            document.body.appendChild(tempContainer);
+
+            // 高清配置
+            const canvas = await html2canvas(tempContainer, {
+                scale: 2, // 提高清晰度
+                useCORS: true,
+                logging: false,
+                backgroundColor: '#ffffff',
+                windowWidth: tempContainer.scrollWidth,
+                windowHeight: tempContainer.scrollHeight
+            });
+
+            // 移除临时容器
+            document.body.removeChild(tempContainer);
+
+            const imgData = canvas.toDataURL('image/jpeg', 1.0);
+            const pdf = new PDF('p', 'mm', 'a4');
+            
+            const pageWidth = 210; // A4 width in mm
+            const pageHeight = 297; // A4 height in mm
+            
+            // 计算适应宽度的尺寸
+            let finalWidth = pageWidth;
+            let finalHeight = canvas.height * pageWidth / canvas.width;
+            
+            // 如果高度超过一页，则缩放以适应高度（确保永远只有一页）
+            if (finalHeight > pageHeight) {
+                const scale = pageHeight / finalHeight;
+                finalWidth = finalWidth * scale;
+                finalHeight = pageHeight;
+            }
+            
+            // 水平居中
+            const x = (pageWidth - finalWidth) / 2;
+            const y = 0; // 顶部对齐
+
+            pdf.addImage(imgData, 'JPEG', x, y, finalWidth, finalHeight);
+
+            pdf.save(fileName);
+            return { success: true, fileName: fileName };
+
+        } catch (error) {
+            console.error('PDF生成失败:', error);
+            return { success: false, error: error };
+        }
+    },
+
+    // 废弃：使用浏览器原生打印功能生成PDF（文字版，非图片）
+    printPDF(container, formData) {
+        return new Promise((resolve, reject) => {
+            try {
+                // 创建隐藏的iframe
+                const iframe = document.createElement('iframe');
+                iframe.style.position = 'fixed';
+                iframe.style.right = '0';
+                iframe.style.bottom = '0';
+                iframe.style.width = '0';
+                iframe.style.height = '0';
+                iframe.style.border = '0';
+                
+                document.body.appendChild(iframe);
+                
+                const doc = iframe.contentWindow.document;
+                
+                // 获取容器的ID和样式
+                const containerId = container.id || 'print-content';
+                const containerStyle = container.getAttribute('style') || '';
+                
+                // 获取页面所有的样式表
+                const styles = Array.from(document.querySelectorAll('link[rel="stylesheet"], style'))
+                    .map(style => style.outerHTML)
+                    .join('');
+                
+                // 生成文件名用于标题
+                // 格式：[派车单-Shipment-PO-提货日期-路线名称]
+                const shipment = formData.shipment || 'Unknown'; // Shipment在第一个位置
+                const po = formData.cw1no || formData.po || 'Unknown'; // PO在第二个位置
+                const pickupDate = formData.pickupDate || this.DateUtils?.getCurrentDate() || new Date().toISOString().split('T')[0];
+                const routeName = formData.routeName || '未选择路线';
+                
+                const title = `派车单-${shipment}-${po}-${pickupDate}-${routeName}`;
+
+                // 写入内容
+                doc.open();
+                doc.write(`
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>${title}</title>
+                        <meta charset="UTF-8">
+                        ${styles}
+                        <style>
+                            body { 
+                                background: white; 
+                                margin: 0; 
+                                padding: 0; 
+                                -webkit-print-color-adjust: exact; 
+                                print-color-adjust: exact; 
+                            }
+                            @media print {
+                                @page { 
+                                    size: A4; 
+                                    margin: 0; 
+                                }
+                                body { 
+                                    -webkit-print-color-adjust: exact; 
+                                    print-color-adjust: exact; 
+                                }
+                                .no-print { display: none; }
+                            }
+                            /* 重写容器样式，确保在iframe中正确显示 */
+                            #${containerId} { 
+                                ${containerStyle} 
+                                position: relative !important; 
+                                left: auto !important; 
+                                top: auto !important;
+                                margin: 0 auto !important;
+                                box-shadow: none !important;
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <div id="${containerId}">
+                            ${container.innerHTML}
+                        </div>
+                        <script>
+                            // 等待图片加载完成
+                            window.onload = function() {
+                                // 稍微延迟以确保渲染完成
+                                setTimeout(function() {
+                                    window.print();
+                                }, 100);
+                            };
+                        </script>
+                    </body>
+                    </html>
+                `);
+                doc.close();
+
+                // 监听打印完成（无法精确检测取消/确认，只能近似处理）
+                // 给用户足够的时间进行打印操作，然后再移除iframe
+                setTimeout(() => {
+                    // 不立即移除，以免打印对话框还没出来就被移除了
+                    // 大部分浏览器打印是阻塞的，所以这行代码会在打印对话框关闭后执行
+                    // 但为了保险起见，设置一个较长的超时
+                    if (document.body.contains(iframe)) {
+                        document.body.removeChild(iframe);
+                    }
+                    resolve({ success: true, fileName: title + '.pdf' });
+                }, 1000);
+                
+            } catch (error) {
+                console.error('打印失败:', error);
+                reject(error);
+            }
+        });
+    },
+
+    // 旧的基于图片的PDF生成函数（保留作为备用）
+    async generateImagePDF(container, formData, isReprint = false) {
         if (!this.checkLibraries()) {
             return false;
         }
@@ -260,26 +446,24 @@ const PDFUtils = {
 
         try {
             const canvas = await html2canvas(container, {
-                scale: 1.5, // 降低缩放比例从2改为1.5，减小文件大小
+                scale: 1.5,
                 useCORS: true,
                 allowTaint: true,
                 backgroundColor: '#ffffff',
-                logging: false, // 关闭日志以提高性能
-                removeContainer: true // 自动移除临时容器
+                logging: false,
+                removeContainer: true
             });
 
-            const imgData = canvas.toDataURL('image/jpeg', 0.85); // 使用JPEG格式并设置85%质量，减小文件大小
+            const imgData = canvas.toDataURL('image/jpeg', 0.85);
             const imgWidth = canvas.width;
             const imgHeight = canvas.height;
 
-            // A4纸张尺寸 (mm)
             const a4Width = 210;
             const a4Height = 297;
-            const margin = 3; // 减少页边距，从10mm改为3mm
+            const margin = 3;
             const contentWidth = a4Width - 2 * margin;
             const contentHeight = a4Height - 2 * margin;
 
-            // 计算缩放比例
             const scaleX = contentWidth / (imgWidth * 0.264583);
             const scaleY = contentHeight / (imgHeight * 0.264583);
             const scale = Math.min(scaleX, scaleY, 1);
@@ -287,13 +471,11 @@ const PDFUtils = {
             const scaledWidth = (imgWidth * 0.264583) * scale;
             const scaledHeight = (imgHeight * 0.264583) * scale;
 
-            // 判断是否需要分页
             const needMultiplePages = scaledHeight > contentHeight;
             
             const pdf = new PDF('p', 'mm', 'a4');
             
             if (needMultiplePages) {
-                // 分页处理
                 const pageHeight = contentHeight;
                 const totalPages = Math.ceil(scaledHeight / pageHeight);
                 
@@ -304,20 +486,17 @@ const PDFUtils = {
                     pdf.addImage(imgData, 'JPEG', margin, margin + yOffset, scaledWidth, scaledHeight);
                 }
             } else {
-                // 单页处理
                 const x = margin + (contentWidth - scaledWidth) / 2;
                 const y = margin + (contentHeight - scaledHeight) / 2;
                 pdf.addImage(imgData, 'JPEG', x, y, scaledWidth, scaledHeight);
             }
 
-            // 生成文件名：派车单-Shipment/PO-提货日期
-        const reprintPrefix = isReprint ? '重打-' : '';
-        const shipment = formData.po || 'Unknown';
-        const po = formData.cw1no || formData.shipment || 'Unknown';
-        const pickupDate = formData.pickupDate || Utils.DateUtils.getCurrentDate();
-        const fileName = `${reprintPrefix}派车单-${shipment}/${po}-${pickupDate}.pdf`;
+            const reprintPrefix = isReprint ? '重打-' : '';
+            const shipment = formData.po || 'Unknown';
+            const po = formData.cw1no || formData.shipment || 'Unknown';
+            const pickupDate = formData.pickupDate || Utils.DateUtils.getCurrentDate();
+            const fileName = `${reprintPrefix}派车单-${shipment}/${po}-${pickupDate}.pdf`;
 
-            // 下载PDF
             pdf.save(fileName);
 
             return { success: true, fileName };

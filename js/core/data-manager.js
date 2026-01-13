@@ -65,23 +65,8 @@ class DataManager {
 
     // 订单相关操作
     getOrders() {
-        // 尝试从 dispatchOrders 键获取数据
-        let orders = this.get(this.storageKeys.DISPATCH_ORDERS, null);
-        
-        // 如果 dispatchOrders 不存在或不是数组，尝试从 orders 键获取数据（向后兼容）
-        if (!orders || !Array.isArray(orders)) {
-            orders = this.get('orders', []);
-            
-            // 如果从 orders 键获取到了数据，将其同步到 dispatchOrders 键
-            if (Array.isArray(orders) && orders.length > 0) {
-                console.log('从 orders 键同步数据到 dispatchOrders 键');
-                this.set(this.storageKeys.DISPATCH_ORDERS, orders);
-            } else {
-                // 如果两个键都没有有效数据，初始化为空数组
-                orders = [];
-                this.set(this.storageKeys.DISPATCH_ORDERS, orders);
-            }
-        }
+        // 直接从 dispatchOrders 键获取数据
+        let orders = this.get(this.storageKeys.DISPATCH_ORDERS, []);
         
         return Array.isArray(orders) ? orders : [];
     }
@@ -295,79 +280,11 @@ class DataManager {
         const dispatchOrders = this.get(this.storageKeys.DISPATCH_ORDERS, null);
         const orders = this.get('orders', null);
         
-        // 如果两个键都不存在，创建示例订单数据
+        // 如果两个键都不存在，初始化为空数组
         if ((!dispatchOrders || !Array.isArray(dispatchOrders) || dispatchOrders.length === 0) && 
             (!orders || !Array.isArray(orders) || orders.length === 0)) {
-            console.log('初始化示例订单数据...');
-            // 创建示例订单数据
-            const sampleOrders = [
-                {
-                    id: 'ORDER-' + Date.now() + '-001',
-                    customerName: '广州制造有限公司',
-                    pickupLocation: '广州市天河区工业大道123号',
-                    deliveryLocation: '深圳市南山区科技园456号',
-                    pickupTime: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 明天
-                    deliveryTime: new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString(), // 后天
-                    status: 'pending',
-                    priority: 'high',
-                    cargoType: '电子产品',
-                    weight: '2500KG',
-                    volume: '15m³',
-                    createTime: new Date().toISOString(),
-                    updateTime: new Date().toISOString(),
-                    notes: '易碎物品，请小心搬运'
-                },
-                {
-                    id: 'ORDER-' + Date.now() + '-002',
-                    customerName: '东莞纺织集团',
-                    pickupLocation: '东莞市长安镇工业区88号',
-                    deliveryLocation: '佛山市南海区物流园区99号',
-                    pickupTime: new Date(Date.now() + 12 * 60 * 60 * 1000).toISOString(), // 12小时后
-                    deliveryTime: new Date(Date.now() + 36 * 60 * 60 * 1000).toISOString(), // 36小时后
-                    status: 'preparing',
-                    priority: 'medium',
-                    cargoType: '纺织品',
-                    weight: '3800KG',
-                    volume: '25m³',
-                    createTime: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2小时前创建
-                    updateTime: new Date().toISOString(),
-                    notes: '防潮包装'
-                },
-                {
-                    id: 'ORDER-' + Date.now() + '-003',
-                    customerName: '中山机械制造',
-                    pickupLocation: '中山市火炬开发区创新路66号',
-                    deliveryLocation: '珠海市香洲区港湾大道188号',
-                    pickupTime: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(), // 6小时前
-                    deliveryTime: new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString(), // 6小时后
-                    status: 'in-transit',
-                    priority: 'high',
-                    cargoType: '机械设备',
-                    weight: '5200KG',
-                    volume: '12m³',
-                    createTime: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // 昨天创建
-                    updateTime: new Date(Date.now() - 30 * 60 * 1000).toISOString(), // 30分钟前更新
-                    notes: '重型货物，需要专用车辆'
-                },
-                {
-                    id: 'ORDER-' + Date.now() + '-004',
-                    customerName: '惠州电子科技',
-                    pickupLocation: '惠州市惠城区科技大道77号',
-                    deliveryLocation: '广州市番禺区工业园区55号',
-                    pickupTime: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString(), // 2天前
-                    deliveryTime: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // 昨天
-                    status: 'completed',
-                    priority: 'medium',
-                    cargoType: '电子元件',
-                    weight: '1800KG',
-                    volume: '8m³',
-                    createTime: new Date(Date.now() - 72 * 60 * 60 * 1000).toISOString(), // 3天前创建
-                    updateTime: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // 昨天更新
-                    notes: '已成功交付'
-                }
-            ];
-            this.setOrders(sampleOrders);
-            console.log('已创建示例订单数据');
+            console.log('初始化空订单数据...');
+            this.setOrders([]);
         }
 
         if (!this.get(this.storageKeys.DIY_ROUTES)) {
@@ -378,7 +295,7 @@ class DataManager {
             this.setTransportTeams([]);
         }
 
-        console.log('默认数据初始化完成');
+        console.log('数据初始化完成');
     }
 
     // 删除客户

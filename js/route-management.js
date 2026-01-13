@@ -120,14 +120,14 @@ function createRouteRow(route) {
             </td>
             <td class="actions-cell">
                 <div class="action-buttons">
-                    <button class="btn btn-sm btn-outline" onclick="viewRouteDetails(${route.id})" title="查看详情">
-                        <i class="fas fa-eye"></i>
+                    <button class="btn btn-sm btn-info" onclick="viewRouteDetails(${route.id})" title="查看详情">
+                        <i class="fas fa-eye"></i> 查看
                     </button>
                     <button class="btn btn-sm btn-primary" onclick="editRoute(${route.id})" title="编辑路线">
-                        <i class="fas fa-edit"></i>
+                        <i class="fas fa-edit"></i> 编辑
                     </button>
                     <button class="btn btn-sm btn-danger" onclick="deleteRoute(${route.id}, '${(route.name || '').replace(/'/g, "\\'")}')" title="删除路线">
-                        <i class="fas fa-trash"></i>
+                        <i class="fas fa-trash"></i> 删除
                     </button>
                 </div>
             </td>

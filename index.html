@@ -73,10 +73,7 @@
                         href="#"
                         class="nav-item"
                     ><i class="fas fa-plus"></i>创建派车单</a>
-                    <a
-                        href="#"
-                        class="nav-item"
-                    ><i class="fas fa-history"></i>历史派车单</a>
+
                 </div>
                 <div class="sidebar-section">
                     <h3>数据管理</h3>
@@ -90,11 +87,7 @@
                         class="nav-item"
                         onclick="importAllData()"
                     ><i class="fas fa-upload"></i>一键导入</a>
-                    <a
-                        href="#"
-                        class="nav-item"
-                        onclick="unifyCustomerFields()"
-                    ><i class="fas fa-sync-alt"></i>统一客户字段</a>
+
                 </div>
             </nav>
             <!-- 总览页面 -->
@@ -253,7 +246,7 @@
                         </div>
                     </div>
                     <!-- 车队和路线信息卡片 -->
-                    <div class="form-card">
+                    <div class="form-card" style="z-index: 20;">
                         <div class="card-header">
                             <h3><i class="fas fa-users"></i> 车队与路线</h3>
                         </div>
@@ -1321,28 +1314,6 @@
             function updateConnectionStatus() {
                 const isOnline = navigator.onLine;
                 console.log('网络状态:', isOnline ? '在线' : '离线');
-
-                // 在页面顶部显示连接状态
-                let statusElement = document.getElementById('connection-status');
-                if (!statusElement) {
-                    statusElement = document.createElement('div');
-                    statusElement.id = 'connection-status';
-                    statusElement.style.cssText = `
-                        position: fixed;
-                        top: 0;
-                        right: 20px;
-                        z-index: 10000;
-                        padding: 5px 10px;
-                        border-radius: 0 0 5px 5px;
-                        font-size: 12px;
-                        font-weight: bold;
-                    `;
-                    document.body.appendChild(statusElement);
-                }
-
-                statusElement.textContent = isOnline ? '在线模式' : '离线模式';
-                statusElement.style.backgroundColor = isOnline ? '#4CAF50' : '#f44336';
-                statusElement.style.color = 'white';
             }
 
             // 监听网络状态变化

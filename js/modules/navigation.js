@@ -1,4 +1,14 @@
 // 导航相关功能模块
+// 页面内容区域的类名
+const CONTENT_SECTIONS = {
+    dashboard: 'overview-dashboard',
+    overview: 'overview-dashboard',
+    orders: 'order-management',
+    dispatch: 'dispatch-form',
+    diyRoute: 'diy-route',
+    customerList: 'customer-list'
+};
+
 // 导航状态管理
 let currentSection = 'dashboard';
 // 当前编辑的路线ID（用于区分新增和编辑模式）
@@ -11,8 +21,14 @@ function getCurrentSection() {
 
 // 导航设置 - 优化版本
 function setupNavigation() {
-    // 初始化页面显示
-    showContent(CONTENT_SECTIONS.dashboard);
+    // 检查URL参数，优先处理路由跳转
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('editRoute')) {
+        showDIYRoute();
+    } else {
+        // 初始化默认显示仪表盘
+        showContent(CONTENT_SECTIONS.dashboard);
+    }
 
     // 使用事件委托优化侧边栏导航事件
     const sidebar = document.querySelector('.sidebar');
@@ -40,8 +56,6 @@ function setupNavigation() {
                 showOrderManagement();
             } else if (text.includes('创建派车单')) {
                 showDispatchForm();
-            } else if (text.includes('历史派车单')) {
-                showOrderManagement();
             }
         });
     }
@@ -555,6 +569,9 @@ function saveRoute() {
     const waypoints = getWaypoints();
     const cargoInfo = getCargoInfo();
 
+    console.log('保存路线 - 获取到的货物信息:', cargoInfo);
+    console.log('保存路线 - 获取到的备注信息:', document.getElementById('routeNotes').value);
+
     // 获取基本信息字段
     const shipmentEl = document.getElementById('po');
     const poEl = document.getElementById('shipment');
@@ -626,11 +643,16 @@ function saveRoute() {
 
 // 获取货物信息
 function getCargoInfo() {
+    const getType = document.getElementById('routeCargoType');
+    const getWeight = document.getElementById('routeCargoWeight');
+    const getVolume = document.getElementById('routeCargoVolume');
+    const getPieces = document.getElementById('routeCargoPieces');
+
     return {
-        type: document.getElementById('routeCargoType').value || '',
-        weight: document.getElementById('routeCargoWeight').value || '',
-        volume: document.getElementById('routeCargoVolume').value || '',
-        pieces: document.getElementById('routeCargoPieces').value || ''
+        type: getType ? getType.value : '',
+        weight: getWeight ? getWeight.value : '',
+        volume: getVolume ? getVolume.value : '',
+        pieces: getPieces ? getPieces.value : ''
     };
 }
 
@@ -719,15 +741,7 @@ function clearRouteForm() {
     currentEditingRouteId = null;
 }
 
-// 页面内容区域的类名
-const CONTENT_SECTIONS = {
-    dashboard: 'dashboard-overview',
-    overview: 'overview-dashboard',
-    orders: 'order-management',
-    dispatch: 'dispatch-form',
-    diyRoute: 'diy-route',
-    customerList: 'customer-list'
-};
+
 
 // 显示指定的内容区域
 function showContent(sectionId) {
@@ -911,14 +925,14 @@ function renderCustomerTable(customers) {
             </td>
             <td>
                 <div class="action-buttons">
-                    <button class="btn btn-sm btn-outline" onclick="viewCustomerDetail('${customer.id}')" title="查看详情">
-                        <i class="fas fa-eye"></i>
+                    <button class="btn btn-sm btn-info" onclick="viewCustomerDetail('${customer.id}')" title="查看详情">
+                        <i class="fas fa-eye"></i> 查看
                     </button>
-                    <button class="btn btn-sm btn-accent" onclick="editCustomer('${customer.id}')" title="编辑">
-                        <i class="fas fa-edit"></i>
+                    <button class="btn btn-sm btn-primary" onclick="editCustomer('${customer.id}')" title="编辑">
+                        <i class="fas fa-edit"></i> 编辑
                     </button>
                     <button class="btn btn-sm btn-danger" onclick="deleteCustomer('${customer.id}')" title="删除">
-                        <i class="fas fa-trash"></i>
+                        <i class="fas fa-trash"></i> 删除
                     </button>
                 </div>
             </td>
@@ -1670,10 +1684,10 @@ function loadRouteForEdit(routeId) {
 
     // 填充货物信息（如果存在）
     if (route.cargoInfo) {
-        document.getElementById('cargoType').value = route.cargoInfo.type || '';
-        document.getElementById('cargoWeight').value = route.cargoInfo.weight || '';
-        document.getElementById('cargoVolume').value = route.cargoInfo.volume || '';
-        document.getElementById('cargoPieces').value = route.cargoInfo.pieces || '';
+        if (document.getElementById('routeCargoType')) document.getElementById('routeCargoType').value = route.cargoInfo.type || '';
+        if (document.getElementById('routeCargoWeight')) document.getElementById('routeCargoWeight').value = route.cargoInfo.weight || '';
+        if (document.getElementById('routeCargoVolume')) document.getElementById('routeCargoVolume').value = route.cargoInfo.volume || '';
+        if (document.getElementById('routeCargoPieces')) document.getElementById('routeCargoPieces').value = route.cargoInfo.pieces || '';
     }
 
     // 添加途经点

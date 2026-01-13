@@ -174,7 +174,7 @@ function viewCustomerDetail(customerId) {
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-accent" onclick="editCustomer('${customerId}')">编辑</button>
+                <button class="btn btn-primary" onclick="editCustomer('${customerId}')"><i class="fas fa-edit"></i> 编辑</button>
                 <button class="btn btn-outline" onclick="closeCustomerDetailModal()">关闭</button>
             </div>
         </div>
@@ -261,77 +261,7 @@ function editCustomer(customerId) {
 // 确保editCustomer函数在全局作用域中可用
 window.editCustomer = editCustomer;
 
-// 统一客户字段格式
-function unifyCustomerFields() {
-    if (!window.dataManager) {
-        alert('数据管理器未初始化');
-        return;
-    }
-    
-    try {
-        // 获取所有客户数据
-        const customers = window.dataManager.getCustomers();
-        const customerData = window.dataManager.getCustomerData();
-        
-        let updatedCount = 0;
-        const unifiedCustomers = [];
-        const unifiedCustomerData = {};
-        
-        // 处理新格式的客户数据
-        customers.forEach(customer => {
-            const unifiedCustomer = {
-                id: customer.id,
-                name: customer.name || '',
-                contact: customer.contact || '',
-                phone: customer.phone || '',
-                address: customer.address || '',
-                addTime: customer.addTime || new Date().toISOString()
-            };
-            unifiedCustomers.push(unifiedCustomer);
-            unifiedCustomerData[customer.id] = unifiedCustomer;
-            updatedCount++;
-        });
-        
-        // 处理旧格式的客户数据
-        Object.entries(customerData).forEach(([id, data]) => {
-            // 检查是否已经在新格式中处理过
-            if (!unifiedCustomers.find(c => c.id === id)) {
-                const unifiedCustomer = {
-                    id: id,
-                    name: data.name || data.pickupFactory || '',
-                    contact: data.contact || data.pickupContact || '',
-                    phone: data.phone || window.dataManager.extractPhone(data.pickupContact) || '',
-                    address: data.address || data.pickupAddress || '',
-                    addTime: data.addTime || new Date().toISOString()
-                };
-                unifiedCustomers.push(unifiedCustomer);
-                unifiedCustomerData[id] = unifiedCustomer;
-                updatedCount++;
-            }
-        });
-        
-        // 保存统一后的数据
-        window.dataManager.setCustomers(unifiedCustomers);
-        window.dataManager.setCustomerData(unifiedCustomerData);
-        
-        // 刷新客户列表显示
-        if (getCurrentSection() === 'customerList') {
-            loadCustomerListData();
-        }
-        
-        // 更新客户选择下拉框
-        updateCustomerDropdown();
-        
-        alert(`客户字段统一完成！共处理 ${updatedCount} 个客户记录。`);
-        
-    } catch (error) {
-        console.error('统一客户字段时出错:', error);
-        alert('统一客户字段失败，请查看控制台了解详情。');
-    }
-}
 
-// 将统一字段函数添加到全局作用域
-window.unifyCustomerFields = unifyCustomerFields;
 
 // 删除客户
 function deleteCustomer(customerId) {

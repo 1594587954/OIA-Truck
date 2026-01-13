@@ -316,6 +316,13 @@ class OrderManager {
                 }
             }
 
+            // 按创建时间降序排序
+            orders.sort((a, b) => {
+                const timeA = new Date(a.createTime || 0).getTime();
+                const timeB = new Date(b.createTime || 0).getTime();
+                return timeB - timeA;
+            });
+
             console.log(`加载了 ${orders.length} 个订单`);
 
             // 添加订单到表格
